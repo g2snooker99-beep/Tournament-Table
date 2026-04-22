@@ -1,78 +1,103 @@
+/* =========================================
+   GLOBAL VARIABLES & RESET
+========================================= */
 :root {
-    --bg-dark: #0a0a0c;
-    --card-bg: rgba(22, 22, 26, 0.9);
-    --glass-border: rgba(255, 255, 255, 0.1);
+    --bg-dark: #070709;
+    --card-bg: rgba(22, 22, 26, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.08);
     --accent: #00d4ff;
+    --accent-glow: rgba(0, 212, 255, 0.4);
     --gold: #ffd700;
+    --gold-glow: rgba(255, 215, 0, 0.5);
     --text-main: #ffffff;
+    --text-dim: #9ba1a6;
+    --status-pending: #f39c12;
+    --status-success: #28a745;
+    --status-danger: #dc3545;
 }
 
-body { 
-    margin: 0; font-family: 'Kanit', sans-serif; 
-    background: #070709; color: var(--text-main); 
-    height: 100vh; overflow: hidden; 
-}
+body { margin: 0; font-family: 'Inter', 'Kanit', sans-serif; background-color: var(--bg-dark); color: var(--text-main); background-image: radial-gradient(circle at 50% 0%, #1a1a24 0%, #070709 70%); min-height: 100vh; }
+.container { max-width: 1200px; margin: 0 auto; padding: 20px; }
 
-.live-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
+/* =========================================
+   1. UI GLASSMORPHISM (หน้าแรก, รับสมัคร, Setup)
+========================================= */
+.hero-section { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; text-align: center; }
+.btn-huge { background: linear-gradient(135deg, #00d4ff 0%, #0056b3 100%); color: white; font-size: 1.8em; padding: 20px 40px; border-radius: 50px; border: none; cursor: pointer; box-shadow: 0 10px 30px var(--accent-glow); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); text-transform: uppercase; font-weight: 900; letter-spacing: 2px; }
+.btn-huge:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 15px 40px rgba(0, 212, 255, 0.6); }
 
-#bracketWrapper { 
-    flex: 1; display: flex; justify-content: center; align-items: center; 
-    overflow: hidden; padding: 20px;
-}
+.form-container, .info-box { background: var(--card-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 35px; border-radius: 20px; max-width: 800px; margin: 0 auto 25px auto; border: 1px solid var(--glass-border); box-shadow: 0 20px 50px rgba(0,0,0,0.5); text-align: left; }
+.info-box { border-left: 4px solid var(--accent); }
 
-.bracket-visual { 
-    display: flex; align-items: center; gap: 80px; 
-    transition: all 0.5s ease-in-out; 
-}
+.form-group { margin-bottom: 22px; }
+.form-group label { display: block; margin-bottom: 8px; color: var(--accent); font-weight: bold; font-size: 0.95em; text-transform: uppercase; letter-spacing: 1px; }
+.form-group input, .form-group textarea, .form-group select { width: 100%; padding: 15px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: 10px; color: white; box-sizing: border-box; font-family: inherit; font-size: 1em; transition: all 0.3s ease; }
+.form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 15px var(--accent-glow); background: rgba(0,0,0,0.6); }
 
+.btn-confirm { background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%); color: white; padding: 15px 25px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1.1em; transition: 0.3s; box-shadow: 0 5px 15px rgba(40,167,69,0.3); }
+.btn-confirm:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(40,167,69,0.5); }
+.btn-generate { background: linear-gradient(135deg, #00d4ff 0%, #007bff 100%); width: 100%; padding: 15px; border: none; border-radius: 10px; color: white; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 20px var(--accent-glow); margin-top: 15px; }
+.btn-generate:hover { transform: translateY(-3px); box-shadow: 0 10px 30px var(--accent-glow); }
+
+/* =========================================
+   2. ADMIN DASHBOARD
+========================================= */
+.admin-wrapper { display: flex; height: 100vh; overflow: hidden; }
+.admin-sidebar { width: 260px; background: #0f0f12; border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; z-index: 10; }
+.admin-sidebar .brand { padding: 30px 20px; font-size: 1.4em; font-weight: 800; color: var(--accent); text-shadow: 0 0 10px var(--accent-glow); text-align: center; border-bottom: 1px solid var(--glass-border); }
+.admin-menu { list-style: none; padding: 20px 0; margin: 0; flex-grow: 1; }
+.admin-menu li { padding: 15px 25px; color: var(--text-dim); cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 12px; }
+.admin-menu li:hover, .admin-menu li.active { background: linear-gradient(90deg, rgba(0,212,255,0.1) 0%, transparent 100%); color: var(--accent); border-left: 4px solid var(--accent); }
+.admin-main { flex: 1; overflow-y: auto; padding: 40px; }
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 40px; }
+.stat-card { background: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid var(--glass-border); box-shadow: 0 10px 30px rgba(0,0,0,0.4); backdrop-filter: blur(10px); }
+.stat-card h4 { margin: 0; font-size: 0.85em; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+.stat-card .val { font-size: 2.8em; font-weight: bold; margin: 10px 0 0 0; }
+.stat-card.accent .val { color: var(--accent); text-shadow: 0 0 15px var(--accent-glow); }
+.stat-card.warning .val { color: var(--status-pending); }
+.stat-card.success .val { color: var(--status-success); }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
+.player-card { background: var(--card-bg); border-radius: 16px; padding: 24px; border: 1px solid var(--glass-border); position: relative; backdrop-filter: blur(10px); }
+.status-indicator { position: absolute; top: 24px; right: 24px; width: 10px; height: 10px; border-radius: 50%; }
+.slip-box { margin: 15px 0; height: 180px; background: #000; border-radius: 12px; overflow: hidden; cursor: pointer; border: 1px solid #333; }
+.slip-box img { width: 100%; height: 100%; object-fit: cover; transition: 0.3s; }
+.slip-box:hover img { opacity: 0.7; transform: scale(1.05); }
+.btn-group { display: flex; gap: 10px; margin-top: 15px; }
+.btn-action { flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+.btn-approve { background: var(--status-success); color: white; }
+.btn-reject { background: var(--status-danger); color: white; }
+
+/* =========================================
+   3. E-SPORTS LIVE BRACKET (ตารางแข่งสด & โซน)
+========================================= */
+.live-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; }
+#bracketWrapper { flex: 1; display: flex; justify-content: center; align-items: center; overflow: auto; padding: 20px; }
+.bracket-visual { display: flex; align-items: center; gap: 80px; transition: all 0.5s ease-in-out; }
 .side { display: flex; gap: 40px; align-items: center; }
+.left-side { flex-direction: row; }
+
+/* ฝั่งขวา สะท้อนกลับด้านอย่างถูกต้อง */
+.right-side { flex-direction: row-reverse; }
+.right-side .round { flex-direction: column; }
+.right-side .matchup { flex-direction: column; align-items: flex-end; }
+.right-side .player-slot { border-left: none; border-right: 5px solid var(--accent); text-align: right; flex-direction: row-reverse; }
+.right-side .player-slot:not(.waiting) { border-right-color: var(--accent); }
+
 .round { display: flex; flex-direction: column; justify-content: space-around; gap: 20px; height: 100%; }
 
-/* ปรับ Matchup ให้ใหญ่ขึ้นเพื่อรองรับคนเยอะแต่โชว์ทีละส่วน */
-.matchup { 
-    background: #16161e; padding: 12px; border-radius: 12px; 
-    border: 1px solid #333; min-width: 250px; 
-    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-}
+/* ขนาดตารางใหญ่จุใจ */
+.matchup { background: #16161e; padding: 12px; border-radius: 12px; border: 1px solid #333; min-width: 250px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); margin: 5px 0; }
 
-.player-slot { 
-    background: #0d0d12; padding: 15px; border-radius: 8px; margin: 5px 0; 
-    font-weight: bold; border-left: 5px solid var(--accent); 
-    font-size: 1.3em; /* ตัวหนังสือใหญ่ขึ้น */
-}
-.player-slot.waiting { color: #444; border-left-color: #222; }
+.player-slot { background: #0d0d12; padding: 15px; border-radius: 8px; margin: 5px 0; font-weight: bold; border-left: 5px solid var(--accent); font-size: 1.2em; color: #fff; cursor: pointer; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }
+.player-slot:hover { border-color: var(--gold); box-shadow: 0 0 15px rgba(255, 215, 0, 0.3); background: #1a1a2f; }
+.player-slot.waiting { color: #555 !important; border-left-color: #222; font-style: italic; cursor: default; }
+.right-side .player-slot.waiting { border-right-color: #222; }
 
-.champion-area { 
-    text-align: center; padding: 30px; border: 3px solid var(--gold); 
-    border-radius: 30px; background: rgba(255,215,0,0.05);
-    min-width: 300px;
-}
-.zone-tag {
-    background: var(--accent); color: #000; padding: 5px 20px; 
-    border-radius: 50px; font-weight: 900; font-size: 1.5em; margin-bottom: 20px; display: inline-block;
-}
+.champion-area { text-align: center; padding: 30px; border: 3px solid var(--gold); border-radius: 30px; background: rgba(255,215,0,0.05); min-width: 300px; box-shadow: 0 0 40px rgba(255, 215, 0, 0.2); }
+.zone-tag { background: var(--accent); color: #000; padding: 5px 20px; border-radius: 50px; font-weight: 900; font-size: 1.5em; margin-bottom: 20px; display: inline-block; }
+.grand-champion-name { font-size: 2.2em; color: #fff; font-weight: 900; text-shadow: 0 0 10px var(--gold); margin: 10px 0; }
 
-/* ส่วนของหน้า Setup/Admin ให้เหมือนเดิม */
-.form-container { background: var(--card-bg); padding: 20px; border-radius: 15px; margin: 10px auto; max-width: 800px; border: 1px solid var(--glass-border); }
-input, select { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; margin-top: 5px; }
-
-/* ปรับแต่งพิเศษสำหรับตารางฝั่งขวาให้เรียงจากนอกเข้าใน */
-.right-side .round {
-    flex-direction: column;
-}
-
-.right-side .matchup {
-    flex-direction: column;
-    align-items: flex-end; /* ให้ชื่อชิดขวา */
-}
-
-.right-side .player-slot {
-    border-left: none;
-    border-right: 5px solid var(--accent); /* ย้ายขีดเรืองแสงไปไว้ด้านขวา */
-    text-align: right;
-    flex-direction: row-reverse; /* สลับตำแหน่งชื่อกับคะแนน (ถ้ามี) */
-}
-
-.right-side .player-slot:not(.waiting) {
-    border-right-color: var(--accent);
-}
+/* Modal Image Viewer */
+.img-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(5px); }
+.img-modal-content { margin: auto; display: block; max-height: 85vh; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 12px; }
+.close-modal { position: absolute; top: 30px; right: 40px; color: #fff; font-size: 40px; cursor: pointer; }
