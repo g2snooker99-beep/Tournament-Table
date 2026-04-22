@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tournament-Table | สมัครแข่งขัน</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .campaign-header { text-align: center; margin-bottom: 30px; }
+        .campaign-banner { max-width: 100%; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .info-box { background: #252525; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #00d4ff; text-align: left;}
+        .jersey-preview { max-width: 250px; display: block; margin: 10px auto; border-radius: 8px; }
+        select { width: 100%; padding: 12px; background: #2a2a2a; border: 1px solid #444; border-radius: 8px; color: white; font-family: inherit; }
+    </style>
+</head>
+<body>
+    <div class="container" style="max-width: 700px;">
+        <div id="loading" style="text-align:center; font-size: 1.5em; color: #00d4ff; padding: 50px 0;">⏳ กำลังโหลดข้อมูลรายการแข่งขัน...</div>
+        
+        <div id="registrationContent" style="display: none;">
+            <div class="campaign-header">
+                <img id="bannerImg" class="campaign-banner" style="display:none;" alt="Banner">
+                <h1 id="cName" style="color: #fff; margin-bottom: 10px; text-transform: uppercase;">ชื่อรายการ</h1>
+                <div class="info-box">
+                    <h3 style="color:#00d4ff; margin-top:0;">📜 กติกาและรายละเอียด</h3>
+                    <p id="cRules" style="white-space: pre-line; color:#ddd; line-height: 1.6;"></p>
+                    <hr style="border-color:#444; margin: 15px 0;">
+                    <p style="font-size: 1.2em; margin:0;">💵 ค่าสมัคร: <strong id="cFee" style="color:#f39c12; font-size: 1.4em;"></strong> บาท</p>
+                </div>
+            </div>
+
+            <div class="form-container">
+                <h2 style="text-align: center; color: #fff; margin-top:0; margin-bottom: 20px;">📝 กรอกข้อมูลสมัครแข่งขัน</h2>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label>ชื่อผู้เข้าแข่งขัน (หรือชื่อทีม) *</label>
+                        <input type="text" id="playerName" placeholder="กรอกชื่อของคุณ" required>
+                    </div>
+                    <div class="form-group">
+                        <label>เบอร์โทรศัพท์ติดต่อ *</label>
+                        <input type="tel" id="playerPhone" placeholder="08X-XXX-XXXX" required>
+                    </div>
+                    
+                    <div id="jerseySection" class="form-group" style="display:none; background:#222; padding:15px; border-radius:8px; border: 1px dashed #555;">
+                        <label style="color:#00d4ff;">👕 รูปแบบเสื้อแข่งขัน</label>
+                        <img id="jerseyImg" class="jersey-preview" alt="Jersey">
+                        <label style="margin-top:15px;">ไซส์เสื้อที่ต้องการ</label>
+                        <select id="jerseySize">
+                            <option value="-">ไม่ระบุ / ไม่รับเสื้อ</option>
+                            <option value="S">S</option>
+                            <option value="M">M</option>
+                            <option value="L">L</option>
+                            <option value="XL">XL</option>
+                            <option value="XXL">XXL</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>แนบสลิปโอนเงินค่าสมัคร *</label>
+                        <input type="file" id="paymentSlip" accept="image/*" required>
+                    </div>
+
+                    <button type="submit" class="btn-confirm" id="submitBtn" style="width:100%; font-size:1.2em; margin-top:10px;">✅ ยืนยันการสมัคร</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="successMessage" style="display: none; text-align:center; padding: 50px 20px;">
+            <h1 style="color: #28a745; font-size: 4em; margin:0;">🎉</h1>
+            <h2 style="color: #fff;">สมัครเรียบร้อยแล้ว!</h2>
+            <p style="color: #aaa; font-size: 1.1em; line-height: 1.6;">ข้อมูลและสลิปของคุณถูกส่งไปยังผู้จัดงานแล้ว<br>กรุณารอแอดมินตรวจสอบและประกาศสายการแข่งขันต่อไป</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        
+        // *** อย่าลืมใส่ API KEY ให้ตรงกับหน้าอื่นๆ ด้วยนะครับ ***
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY", 
+            authDomain: "tournament-table-45dca.firebaseapp.com",
+            projectId: "tournament-table-45dca",
+            storageBucket: "tournament-table-45dca.appspot.com",
+            messagingSenderId: "SENDER_ID",
+            appId: "APP_ID"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // ดึง ID แคมเปญจาก URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const campaignId = urlParams.get('campaign');
+
+        async function loadCampaign() {
+            if (!campaignId) {
+                document.getElementById('loading').innerText = "❌ ไม่พบรหัสรายการแข่งขัน (URL ไม่ถูกต้อง)";
+                return;
+            }
+            try {
+                const docSnap = await getDoc(doc(db, "campaigns", campaignId));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    
+                    // นำข้อมูลมาแสดงบนหน้าจอ
+                    document.getElementById('cName').innerText = data.name;
+                    document.getElementById('cRules').innerText = data.rules;
+                    document.getElementById('cFee').innerText = data.fee;
+                    
+                    // โชว์แบนเนอร์ ถ้าแอดมินอัปโหลดไว้
+                    if (data.bannerImg) {
+                        const banner = document.getElementById('bannerImg');
+                        banner.src = data.bannerImg;
+                        banner.style.display = 'block';
+                    }
+                    // โชว์รูปเสื้อและให้เลือกไซส์ ถ้าแอดมินอัปโหลดไว้
+                    if (data.jerseyImg) {
+                        document.getElementById('jerseySection').style.display = 'block';
+                        document.getElementById('jerseyImg').src = data.jerseyImg;
+                    }
+
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('registrationContent').style.display = 'block';
+                } else {
+                    document.getElementById('loading').innerText = "❌ ไม่พบข้อมูลรายการนี้ (อาจถูกลบหรือปิดรับสมัครแล้ว)";
+                }
+            } catch (e) {
+                document.getElementById('loading').innerText = "❌ เกิดข้อผิดพลาด: " + e.message;
+            }
+        }
+
+        const fileToBase64 = (file) => new Promise((resolve, reject) => {
+            if (!file) return resolve(null);
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+
+        // จัดการเมื่อกดปุ่ม Submit
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.innerText = "⏳ กำลังส่งข้อมูล...";
+            btn.disabled = true;
+
+            try {
+                // แปลงสลิปโอนเงินเป็น Base64
+                const slipFile = document.getElementById('paymentSlip').files[0];
+                const slipBase64 = await fileToBase64(slipFile);
+
+                // สร้าง Object เก็บข้อมูลคนสมัคร
+                const regData = {
+                    campaignId: campaignId,
+                    playerName: document.getElementById('playerName').value,
+                    phone: document.getElementById('playerPhone').value,
+                    jerseySize: document.getElementById('jerseySize') ? document.getElementById('jerseySize').value : "-",
+                    paymentSlip: slipBase64,
+                    status: "pending", // สถานะรอแอดมินตรวจสอบ
+                    registeredAt: new Date().toISOString()
+                };
+
+                // บันทึกลงคอลเลกชัน "registrations"
+                await addDoc(collection(db, "registrations"), regData);
+                
+                // โชว์หน้าจอสำเร็จ
+                document.getElementById('registrationContent').style.display = 'none';
+                document.getElementById('successMessage').style.display = 'block';
+                window.scrollTo(0, 0); // เลื่อนจอขึ้นบนสุด
+            } catch (error) {
+                alert("❌ บันทึกไม่สำเร็จ: " + error.message);
+                btn.innerText = "✅ ยืนยันการสมัคร";
+                btn.disabled = false;
+            }
+        });
+
+        // เริ่มโหลดข้อมูลทันทีที่เปิดหน้าเว็บ
+        window.onload = loadCampaign;
+    </script>
+</body>
+</html>
