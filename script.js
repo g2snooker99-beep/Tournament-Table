@@ -1,20 +1,13 @@
-// ฟังก์ชันสร้างช่องกรอกชื่อตามจำนวนคน
 function generateInputFields() {
     let count = parseInt(document.getElementById('playerCount').value);
     let container = document.getElementById('nameFields');
     container.innerHTML = ''; 
-
     for (let i = 1; i <= count; i++) {
-        container.innerHTML += `
-            <div class="player-row">
-                <input type="text" class="playerName" placeholder="ผู้เล่นคนที่ ${i}" required>
-            </div>
-        `;
+        container.innerHTML += `<div class="player-row"><input type="text" class="playerName" placeholder="Player ${i}"></div>`;
     }
     document.getElementById('playerInputs').style.display = 'block';
 }
 
-// ฟังก์ชันสุ่ม Array
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -22,79 +15,52 @@ function shuffleArray(array) {
     }
 }
 
-// ฟังก์ชันคำนวณสายแข่ง
-let tournamentDataToSave = {}; // ตัวแปรเก็บข้อมูลเตรียมส่งให้ Firebase
+let tournamentDataToSave = {};
 
 function generateBracket() {
-    let inputs = document.querySelectorAll('.playerName');
-    let players = [];
-    inputs.forEach(input => {
-        if(input.value.trim() !== "") players.push(input.value.trim());
-    });
+    let players = Array.from(document.querySelectorAll('.playerName')).map(i => i.value.trim()).filter(v => v !== "");
+    if (players.length < 2) return alert("ใส่ชื่ออย่างน้อย 2 คนครับ");
+    shuffleArray(players);
 
     let n = players.length;
-    if (n < 2) return alert("กรุณากรอกชื่อผู้เล่นอย่างน้อย 2 คน");
-
-    shuffleArray(players); // สุ่มรายชื่อ
-
     let p = Math.pow(2, Math.ceil(Math.log2(n))); 
     let byes = p - n;
-    let r1_players = n - byes;
+    let r1_count = n - byes;
 
-    let html = `<h3>สรุปสายการแข่งขัน (${n} คน)</h3>`;
-    html += `<p>ได้สิทธิ์ Bye (รอรอบ 2): <strong>${byes} คน</strong></p>`;
-    
-    let currentMatch = 1;
-    let round1Matches = [];
+    let resultDiv = document.getElementById('result');
+    resultDiv.innerHTML = `<div class="bracket-visual" id="bracketContainer"></div>`;
+    let container = document.getElementById('bracketContainer');
 
-    // จับคู่รอบแรก
-    if (r1_players > 0) {
-        html += `<h4>🔥 จับคู่รอบแรก (คัดเลือก)</h4>`;
-        for (let i = 0; i < r1_players; i += 2) {
-            html += `<div class="match-line">แมตช์ที่ ${currentMatch}: ${players[i]} 🆚 ${players[i+1]}</div>`;
-            round1Matches.push(`${players[i]} VS ${players[i+1]}`);
-            currentMatch++;
-        }
+    // Round 1
+    let r1HTML = `<div class="round"><div class="round-title">Round 1</div>`;
+    for (let i = 0; i < r1_count; i += 2) {
+        r1HTML += `<div class="matchup"><div class="player-slot">${players[i]}</div><div class="vs-badge">VS</div><div class="player-slot">${players[i+1]}</div></div>`;
+    }
+    r1HTML += `</div>`;
+    container.innerHTML += r1HTML;
+
+    // Byes / Round 2
+    let byePlayers = players.slice(r1_count);
+    if (byePlayers.length > 0 || r1_count > 0) {
+        let r2HTML = `<div class="round"><div class="round-title">Next Round</div>`;
+        byePlayers.forEach(name => {
+            r2HTML += `<div class="matchup"><div class="player-slot">${name}</div><div class="player-slot" style="color:#555"><i>Waiting...</i></div></div>`;
+        });
+        r2HTML += `</div>`;
+        container.innerHTML += r2HTML;
     }
 
-    // คนที่ได้ Bye
-    let byePlayers = players.slice(r1_players);
-    if (byePlayers.length > 0) {
-        html += `<h4>🌟 ผู้เล่นที่ได้สิทธิ์ Bye (ยืนรอรอบถัดไป)</h4>`;
-        html += `<div class="match-line">${byePlayers.join(', ')}</div>`;
-    }
-
-    // เตรียมข้อมูลลง Firebase
-    tournamentDataToSave = {
-        totalPlayers: n,
-        bracketSize: p,
-        byesCount: byes,
-        round1Matches: round1Matches,
-        byePlayers: byePlayers,
-        createdAt: new Date().toISOString()
-    };
-
-    document.getElementById('result').innerHTML = html;
-    document.getElementById('result').style.display = "block";
-    document.getElementById('saveBtn').style.display = "block"; // โชว์ปุ่มเซฟ
+    tournamentDataToSave = { players, createdAt: new Date().toISOString() };
+    resultDiv.style.display = "block";
+    document.getElementById('saveBtn').style.display = "block";
 }
 
-// ฟังก์ชันเซฟลง Firebase (จะถูกเรียกใช้โดยเชื่อมกับ firebase-config.js)
 async function saveToFirebase() {
     try {
-        // ดึงฟังก์ชันและ db มาจาก window ที่เราประกาศไว้ใน firebase-config.js
         const { collection, addDoc } = window.dbFunctions;
-        const db = window.db;
-
-        if (!db) {
-            throw new Error("Firebase ยังไม่ได้เชื่อมต่อ กรุณาเช็ค config");
-        }
-
-        const docRef = await addDoc(collection(db, "tournaments"), tournamentDataToSave);
-        
-        alert("✅ บันทึกข้อมูลสายการแข่งขันลง Firebase สำเร็จ! \nID: " + docRef.id);
-        document.getElementById('saveBtn').style.display = "none";
+        const docRef = await addDoc(collection(window.db, "tournaments"), tournamentDataToSave);
+        alert("✅ บันทึกสำเร็จ ID: " + docRef.id);
     } catch (e) {
-        console.error("Error adding document: ", e);
-        alert("❌ บันทึกไม่สำเร็จ: " + e.message);
+        alert("❌ พัง: " + e.message);
     }
+}
