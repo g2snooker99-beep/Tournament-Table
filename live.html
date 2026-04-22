@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
-    <title>G2 LIVE | 100+ Players Mode</title>
+    <title>G2 LIVE | Grand Final Mode</title>
 </head>
 <body>
     <div class="live-container">
@@ -13,32 +13,43 @@
     </div>
 
     <script type="module">
-        import { db, doc, onSnapshot } from "./firebase-config.js?v=7";
+        import { db, doc, onSnapshot } from "./firebase-config.js?v=8";
         const urlParams = new URLSearchParams(window.location.search);
         const tourneyId = urlParams.get('id');
         let zoneIdx = 0;
+        let zonesSequence = [0, 1, 2, 3]; // เริ่มต้นด้วยโซนปกติ
 
         if (tourneyId) {
             onSnapshot(doc(db, "tournaments", tourneyId), (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    const players = data.players;
-                    const matches = data.matches || {};
-                    const totalZones = Math.ceil(players.length / 32);
+                    window.currentPlayers = data.players || [];
+                    window.currentMatches = data.matches || {};
+                    
+                    const totalZones = Math.ceil(window.currentPlayers.length / 32);
+                    zonesSequence = Array.from({length: totalZones}, (_, i) => i);
+                    
+                    // ✨ ถ้าเริ่มมีผลแชมป์โซน ให้เพิ่มรอบ Grand Final (99) เข้าไปในคิวการสลับหน้าจอ
+                    if (Object.keys(window.currentMatches).some(key => key.startsWith('winner-zone-'))) {
+                        zonesSequence.push(99);
+                    }
 
-                    // ฟังก์ชันสลับโซน
                     const switchZone = () => {
-                        window.initBracket(players, matches, zoneIdx);
-                        zoneIdx = (zoneIdx + 1) % totalZones;
+                        const activeZone = zonesSequence[zoneIdx];
+                        window.initBracket(window.currentPlayers, window.currentMatches, activeZone);
+                        zoneIdx = (zoneIdx + 1) % zonesSequence.length;
                     };
 
-                    switchZone(); // รันครั้งแรก
-                    if (window.slideTimer) clearInterval(window.slideTimer);
-                    window.slideTimer = setInterval(switchZone, 15000); // สลับทุก 15 วินาที
+                    if (!window.initialRender) {
+                        switchZone();
+                        window.initialRender = true;
+                        if (window.slideTimer) clearInterval(window.slideTimer);
+                        window.slideTimer = setInterval(switchZone, 15000); 
+                    }
                 }
             });
         }
     </script>
-    <script src="script.js?v=7"></script>
+    <script src="script.js?v=8"></script>
 </body>
 </html>
