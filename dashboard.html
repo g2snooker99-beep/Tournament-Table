@@ -3,64 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tournament-Table | Admin Panel</title>
+    <title>Tournament-Table | Admin Dashboard</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="admin-mode">
-    
-    <aside class="admin-sidebar">
-        <div class="logo">🏆 Tournament-Table<br><span style="font-size: 0.6em; color: #888;">ADMIN PANEL</span></div>
-        <ul class="admin-menu">
-            <li class="active">📊 จัดการผู้สมัคร (Dashboard)</li>
-            <li onclick="window.location.href='setup.html'">🎯 ดึงรายชื่อ & จัดสายแข่ง</li>
-            <li onclick="window.location.href='index.html'">📝 สร้างรายการแข่งขันใหม่</li>
-        </ul>
-    </aside>
+<body>
+    <div class="admin-wrapper">
+        <aside class="admin-sidebar">
+            <div class="brand">TOURNAMENT-TABLE</div>
+            <ul class="admin-menu">
+                <li class="active">📋 จัดการผู้สมัคร</li>
+                <li onclick="window.location.href='setup.html'">🎯 ดึงรายชื่อจัดสาย</li>
+                <li onclick="window.location.href='index.html'">➕ สร้างรายการแข่ง</li>
+            </ul>
+        </aside>
 
-    <main class="admin-main">
-        
-        <header class="admin-header">
-            <div>
-                <h2 style="margin:0; color:#fff; font-size: 1.4em;">ตรวจสอบยอดชำระเงินและผู้สมัคร</h2>
-                <p style="margin:5px 0 0 0; color:#aaa; font-size:0.9em;">เลือกลิสต์รายการแข่งขันเพื่อดึงข้อมูลแบบ Real-time</p>
+        <main class="admin-main">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 40px;">
+                <div>
+                    <h1 style="margin:0; font-size: 1.8em;">แผงควบคุมแอดมิน</h1>
+                    <p style="color:var(--text-dim); margin-top:5px;">ตรวจสอบและอนุมัติผู้เล่นแบบ Real-time</p>
+                </div>
+                <select id="campaignSelect" class="campaign-selector" onchange="loadRegistrations()">
+                    <option value="">-- กำลังโหลดรายการแข่งขัน --</option>
+                </select>
             </div>
-            <select id="campaignSelect" class="select-campaign" onchange="loadRegistrations()" style="min-width: 250px;">
-                <option value="">-- โหลดรายการแข่งขัน... --</option>
-            </select>
-        </header>
 
-        <div class="stats-container" id="statsArea" style="display:none;">
-            <div class="stat-box highlight">
-                <h4>ผู้สมัครทั้งหมด</h4>
-                <p class="num" id="totalCount">0</p>
+            <div id="statsGrid" class="stats-grid" style="display:none;">
+                <div class="stat-card accent">
+                    <h4>ยอดสมัครรวม</h4>
+                    <p class="val" id="totalCount">0</p>
+                </div>
+                <div class="stat-card warning">
+                    <h4>รอตรวจสอบสลิป</h4>
+                    <p class="val" id="pendingCount">0</p>
+                </div>
+                <div class="stat-card success">
+                    <h4>อนุมัติเข้าร่วมแล้ว</h4>
+                    <p class="val" id="approvedCount">0</p>
+                </div>
             </div>
-            <div class="stat-box warning">
-                <h4>รอตรวจสอบสลิป</h4>
-                <p class="num" id="pendingCount">0</p>
-            </div>
-            <div class="stat-box success">
-                <h4>อนุมัติเข้าร่วมแล้ว</h4>
-                <p class="num" id="approvedCount">0</p>
-            </div>
-        </div>
 
-        <div id="contentArea" style="display:none;">
-            <div class="section-title">
-                <span>⏳ รอตรวจสอบ (Pending)</span>
-            </div>
-            <div id="pendingGrid" class="card-grid" style="margin-bottom: 40px;"></div>
+            <div id="contentView" style="display:none;">
+                <div class="section-header">
+                    <span style="background:var(--status-pending); width:12px; height:12px; border-radius:50%;"></span>
+                    <h2>รายการรอการตรวจสอบ (Pending)</h2>
+                </div>
+                <div id="pendingGrid" class="card-grid" style="margin-bottom: 50px;"></div>
 
-            <div class="section-title">
-                <span style="color:#28a745;">✅ อนุมัติแล้ว (Approved)</span>
+                <div class="section-header">
+                    <span style="background:var(--status-success); width:12px; height:12px; border-radius:50%;"></span>
+                    <h2>รายชื่อที่อนุมัติแล้ว (Approved)</h2>
+                </div>
+                <div id="approvedGrid" class="card-grid"></div>
             </div>
-            <div id="approvedGrid" class="card-grid"></div>
-        </div>
 
-        <div id="emptyState" style="text-align:center; padding: 100px 0; color:#666;">
-            <h2>กรุณาเลือกรายการแข่งขันจากเมนูด้านบน</h2>
-            <p>เพื่อดูรายชื่อผู้สมัครและตรวจสอบสลิปโอนเงิน</p>
-        </div>
-    </main>
+            <div id="emptyView" style="text-align:center; padding: 100px 0; color:#444;">
+                <h2 style="font-size: 2em;">กรุณาเลือกรายการแข่งขันเพื่อเริ่มต้น</h2>
+                <p>ข้อมูลผู้สมัครจะแสดงขึ้นที่นี่หลังจากการเลือกรายการ</p>
+            </div>
+        </main>
+    </div>
 
     <div id="slipModal" class="img-modal">
         <span class="close-modal" onclick="closeModal()">&times;</span>
@@ -71,7 +73,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, getDocs, query, where, onSnapshot, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         
-        // *** ⚠️ ใส่ API KEY ของคุณตรงนี้ ***
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY", 
             authDomain: "tournament-table-45dca.firebaseapp.com",
@@ -93,90 +94,80 @@
                     select.innerHTML += `<option value="${doc.id}">${doc.data().name}</option>`;
                 });
             } catch (error) {
-                console.error("Error loading campaigns: ", error);
+                console.error(error);
             }
         }
 
         window.loadRegistrations = () => {
             const cid = document.getElementById('campaignSelect').value;
-            const pendingGrid = document.getElementById('pendingGrid');
-            const approvedGrid = document.getElementById('approvedGrid');
-            const stats = document.getElementById('statsArea');
-            const content = document.getElementById('contentArea');
-            const empty = document.getElementById('emptyState');
+            const stats = document.getElementById('statsGrid');
+            const content = document.getElementById('contentView');
+            const empty = document.getElementById('emptyView');
             
             if (!cid) { 
-                empty.style.display = 'block'; stats.style.display = 'none'; content.style.display = 'none';
+                stats.style.display = 'none'; content.style.display = 'none'; empty.style.display = 'block';
                 if(unsubscribe) unsubscribe(); return; 
             }
 
-            empty.style.display = 'none'; stats.style.display = 'flex'; content.style.display = 'block';
-            pendingGrid.innerHTML = '<p style="color:#00d4ff;">กำลังโหลด...</p>';
-            approvedGrid.innerHTML = '<p style="color:#00d4ff;">กำลังโหลด...</p>';
-
+            stats.style.display = 'grid'; content.style.display = 'block'; empty.style.display = 'none';
             if (unsubscribe) unsubscribe();
 
             const q = query(collection(db, "registrations"), where("campaignId", "==", cid));
-            
             unsubscribe = onSnapshot(q, (snapshot) => {
-                pendingGrid.innerHTML = ''; approvedGrid.innerHTML = '';
-                let total = 0; let pending = 0; let approved = 0;
+                const pGrid = document.getElementById('pendingGrid');
+                const aGrid = document.getElementById('approvedGrid');
+                pGrid.innerHTML = ''; aGrid.innerHTML = '';
+                let t = 0; let p = 0; let a = 0;
 
                 snapshot.forEach((docSnap) => {
                     const data = docSnap.data();
                     const id = docSnap.id;
-                    total++;
+                    t++;
 
-                    const cardHTML = `
-                        <div class="player-card" style="border-top: 4px solid ${data.status === 'approved' ? '#28a745' : '#f39c12'};">
-                            <h3 style="color:#fff; margin-top:0; font-size:1.1em;">👤 ${data.playerName}</h3>
-                            <p style="margin:5px 0; color:#aaa; font-size:0.9em;">📞 ${data.phone}</p>
-                            <p style="margin:5px 0; color:#aaa; font-size:0.9em;">👕 ไซส์เสื้อ: <strong style="color:#00d4ff;">${data.jerseySize}</strong></p>
-                            <img src="${data.paymentSlip}" class="slip-thumbnail" onclick="openModal('${data.paymentSlip}')" title="คลิกเพื่อขยายดูสลิป">
+                    const card = `
+                        <div class="player-card">
+                            <div class="status-indicator" style="background:${data.status === 'approved' ? 'var(--status-success)' : 'var(--status-pending)'}"></div>
+                            <h3 style="margin:0 0 10px 0; font-size: 1.2em;">${data.playerName}</h3>
+                            <p style="margin:5px 0; color:var(--text-dim); font-size:0.9em;">📞 ${data.phone}</p>
+                            <p style="margin:5px 0; color:var(--text-dim); font-size:0.9em;">👕 ไซส์เสื้อ: <span style="color:var(--accent)">${data.jerseySize}</span></p>
                             
-                            ${data.status === 'pending' ? `
-                            <div style="display:flex; gap:10px; margin-top:10px;">
-                                <button onclick="updateStatus('${id}', 'approved')" style="background:#28a745; border:none; padding:8px; color:white; border-radius:5px; cursor:pointer; flex:1;">อนุมัติ</button>
-                                <button onclick="updateStatus('${id}', 'rejected')" style="background:#dc3545; border:none; padding:8px; color:white; border-radius:5px; cursor:pointer; flex:1;">ปฏิเสธ</button>
-                            </div>` : `
-                            <div style="margin-top:10px;">
-                                <button onclick="updateStatus('${id}', 'pending')" style="background:#444; border:none; padding:8px; color:white; border-radius:5px; cursor:pointer; width:100%; font-size:0.8em;">ย้อนกลับเป็นรอตรวจสอบ</button>
+                            <div class="slip-box" onclick="openModal('${data.paymentSlip}')">
+                                <img src="${data.paymentSlip}">
                             </div>
-                            `}
+
+                            <div class="btn-group">
+                                ${data.status === 'pending' ? `
+                                    <button class="btn-action btn-approve" onclick="updateStatus('${id}', 'approved')">อนุมัติ</button>
+                                    <button class="btn-action btn-reject" onclick="updateStatus('${id}', 'rejected')">ปฏิเสธ</button>
+                                ` : `
+                                    <button class="btn-action btn-revert" onclick="updateStatus('${id}', 'pending')">ย้อนสถานะ</button>
+                                `}
+                            </div>
                         </div>
                     `;
 
-                    if (data.status === 'approved') {
-                        approved++;
-                        approvedGrid.innerHTML += cardHTML;
-                    } else if (data.status === 'pending') {
-                        pending++;
-                        pendingGrid.innerHTML += cardHTML;
-                    }
+                    if (data.status === 'approved') { a++; aGrid.innerHTML += card; }
+                    else { p++; pGrid.innerHTML += card; }
                 });
 
-                if(pending === 0) pendingGrid.innerHTML = '<p style="color:#666;">ไม่มีรายการรอตรวจสอบ</p>';
-                if(approved === 0) approvedGrid.innerHTML = '<p style="color:#666;">ยังไม่มีผู้ได้รับการอนุมัติ</p>';
+                if(p === 0) pGrid.innerHTML = '<p style="color:#444; grid-column:1/-1; text-align:center;">ไม่มีคนรอตรวจสอบ</p>';
+                if(a === 0) aGrid.innerHTML = '<p style="color:#444; grid-column:1/-1; text-align:center;">ยังไม่มีผู้ได้รับการอนุมัติ</p>';
 
-                document.getElementById('totalCount').innerText = total;
-                document.getElementById('pendingCount').innerText = pending;
-                document.getElementById('approvedCount').innerText = approved;
+                document.getElementById('totalCount').innerText = t;
+                document.getElementById('pendingCount').innerText = p;
+                document.getElementById('approvedCount').innerText = a;
             });
         };
 
-        window.updateStatus = async (docId, newStatus) => {
-            try {
-                await updateDoc(doc(db, "registrations", docId), { status: newStatus });
-            } catch (error) {
-                alert("เกิดข้อผิดพลาด: " + error.message);
-            }
+        window.updateStatus = async (id, status) => {
+            await updateDoc(doc(db, "registrations", id), { status });
         };
 
-        window.openModal = (imgSrc) => {
+        window.openModal = (src) => {
             document.getElementById('slipModal').style.display = 'block';
-            document.getElementById('fullSlipImg').src = imgSrc;
+            document.getElementById('fullSlipImg').src = src;
         };
-        window.closeModal = () => { document.getElementById('slipModal').style.display = 'none'; };
+        window.closeModal = () => document.getElementById('slipModal').style.display = 'none';
 
         window.onload = loadCampaigns;
     </script>
