@@ -21,7 +21,6 @@ window.initBracket = (players, matches = {}, zoneIdx = 0) => {
 
     const playersPerZone = 32;
     const startIdx = zoneIdx * playersPerZone;
-    // ดึงรายชื่อเฉพาะของโซนนี้ออกมา 32 คน
     const zonePlayers = players.slice(startIdx, startIdx + playersPerZone);
 
     const visual = document.createElement('div');
@@ -32,14 +31,11 @@ window.initBracket = (players, matches = {}, zoneIdx = 0) => {
     const rightSide = document.createElement('div');
     rightSide.className = 'side right-side';
 
-    // แบ่ง 32 คนเป็น 16 คนฝั่งซ้าย และ 16 คนฝั่งขวา
-    const sidePlayersCount = 16; 
-
-    // วาดรอบคัดเลือก (Round 0 - 3)
+    // วาด 3 รอบในโซน (8, 4, 2 แมตช์ต่อฝั่ง)
     for (let r = 0; r < 3; r++) {
         const matchesInRound = 8 / Math.pow(2, r); // 8, 4, 2 แมตช์ต่อฝั่ง
-        leftSide.appendChild(createZoneRound(r, matchesInRound, `L-Z${zoneIdx}`, zonePlayers.slice(0, 16)));
-        rightSide.appendChild(createZoneRound(r, matchesInRound, `R-Z${zoneIdx}`, zonePlayers.slice(16, 32)));
+        leftSide.appendChild(createZoneRound(r, matchesInRound, `L-Z${zoneIdx}`, zonePlayers, 0));
+        rightSide.appendChild(createZoneRound(r, matchesInRound, `R-Z${zoneIdx}`, zonePlayers, 16)); // 🎉 แก้จุดนี้: ใส่ Offset 16 ให้ฝั่งขวา 🎉
     }
 
     const zoneWinnerKey = `winner-zone-${zoneIdx}`;
@@ -57,30 +53,34 @@ window.initBracket = (players, matches = {}, zoneIdx = 0) => {
     container.appendChild(visual);
 };
 
-function createZoneRound(r, matchCount, sidePrefix, sidePlayers) {
+function createZoneRound(r, matchCount, sidePrefix, zonePlayers, sideOffset) {
     const round = document.createElement('div');
     round.className = 'round';
     for (let i = 0; i < matchCount; i++) {
         const mKey = `${sidePrefix}-R${r}-M${i}`;
         const matchDiv = document.createElement('div');
         matchDiv.className = 'matchup';
-        matchDiv.appendChild(createSlot(r, mKey, 0, sidePlayers));
-        matchDiv.appendChild(createSlot(r, mKey, 1, sidePlayers));
+        matchDiv.id = mKey; // ใส่ ID เพื่อใช้ค้นหาตอนคลิกเลือกแชมป์โซน
+        
+        // ส่ง sideOffset ไปให้ createSlot คำนวณตำแหน่งช่องรอบแรกให้ถูกต้อง
+        matchDiv.appendChild(createSlot(r, mKey, 0, zonePlayers, sideOffset));
+        matchDiv.appendChild(createSlot(r, mKey, 1, zonePlayers, sideOffset));
         round.appendChild(matchDiv);
     }
     return round;
 }
 
-function createSlot(r, mKey, pIdx, sidePlayers) {
+function createSlot(r, mKey, pIdx, zonePlayers, sideOffset) {
     const slot = document.createElement('div');
     slot.className = 'player-slot';
     let name = "รอผล";
     
     if (r === 0) {
-        // รอบแรก ดึงชื่อตรงๆ จาก 16 คนของฝั่งนั้น
+        // รอบแรก ดึงชื่อตรงๆ จาก 32 คนของโซน
         const matchIdx = parseInt(mKey.split('-M')[1]);
         const playerIdxInSide = (matchIdx * 2) + pIdx;
-        name = sidePlayers[playerIdxInSide]?.name || "BYE";
+        const playerIdxInZone = sideOffset + playerIdxInSide; // 🎉 แก้จุดนี้: คำนวณ Index รอบแรกให้ถูกต้อง 🎉
+        name = zonePlayers[playerIdxInZone]?.name || "BYE";
     } else {
         // รอบต่อมา ดึงจากผู้ชนะแมตช์ก่อนหน้า
         const parts = mKey.split('-R');
@@ -96,11 +96,12 @@ function createSlot(r, mKey, pIdx, sidePlayers) {
     if (window.location.pathname.includes('bracket.html') && !slot.classList.contains('waiting')) {
         slot.onclick = () => {
             window.currentMatches[`match-${mKey}`] = name;
-            // ถ้าเป็นคู่สุดท้ายของโซน ให้ส่งชื่อเข้า Champion Area
-            if (mKey.includes('-R2-')) {
+            // ถ้าเป็นแมตช์ชิงแชมป์โซน (Round 2) ให้ส่งชื่อเข้า Champion Area
+            if (r === 2) {
                 const zoneIdx = mKey.split('-Z')[1].split('-')[0];
                 window.currentMatches[`winner-zone-${zoneIdx}`] = name;
             }
+            // วาดตารางใหม่เพื่ออัปเดตสาย
             window.initBracket(window.currentPlayers, window.currentMatches, window.currentZoneIdx || 0);
         };
     }
