@@ -2,15 +2,82 @@ window.generateInputFields = () => {
     const count = parseInt(document.getElementById('playerCount').value) || 8;
     const container = document.getElementById('nameFields');
     if (!container) return;
-    container.innerHTML = '';
-    for (let i = 1; i <= count; i++) {
-        const div = document.createElement('div');
-        div.className = 'form-group';
-        div.innerHTML = `<label style="font-size:0.8em; color:#666;">ช่องที่ ${i}</label>
-                         <input type="text" class="playerName" placeholder="พิมพ์ชื่อผู้แข่ง">`;
-        container.appendChild(div);
+    
+    // โครงสร้างหน้าต่างกรอกแบบใหม่
+    container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px; align-items:center; background:rgba(0,0,0,0.3); padding:10px; border-radius:10px; border:1px dashed #555;">
+            <span style="color:var(--accent); font-size:0.9em;">💡 <b>ทริค:</b> ก๊อปปี้รายชื่อจาก Excel มาวางรวดเดียวได้เลย</span>
+            <button onclick="bulkPaste()" style="background:var(--status-success); color:white; padding:8px 20px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; box-shadow:0 0 10px rgba(40,167,69,0.4);">📋 วางรายชื่อทั้งหมด</button>
+        </div>
+        <div id="tabsArea" class="setup-tabs"></div>
+        <div id="zonesArea"></div>
+    `;
+
+    const tabsArea = document.getElementById('tabsArea');
+    const zonesArea = document.getElementById('zonesArea');
+
+    const playersPerZone = 32;
+    const totalZones = Math.ceil(count / playersPerZone);
+
+    for(let z = 0; z < totalZones; z++) {
+        // สร้างปุ่ม Tab ถ้ามีคนเกิน 32 คน
+        if(totalZones > 1) {
+            const tab = document.createElement('div');
+            tab.className = `setup-tab ${z === 0 ? 'active' : ''}`;
+            tab.innerText = `ZONE ${String.fromCharCode(65 + z)}`;
+            tab.onclick = () => {
+                document.querySelectorAll('.setup-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.zone-container').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`zone-inputs-${z}`).classList.add('active');
+            };
+            tabsArea.appendChild(tab);
+        }
+
+        // สร้างพื้นที่กรอกของแต่ละ Zone
+        const zoneContainer = document.createElement('div');
+        zoneContainer.id = `zone-inputs-${z}`;
+        zoneContainer.className = `zone-container ${z === 0 ? 'active' : ''}`;
+        
+        const grid = document.createElement('div');
+        grid.className = 'name-grid';
+
+        const startNum = z * playersPerZone + 1;
+        const endNum = Math.min((z + 1) * playersPerZone, count);
+
+        // สร้างช่องกรอกเรียงกันแบบ 4 คอลัมน์
+        for (let i = startNum; i <= endNum; i++) {
+            const div = document.createElement('div');
+            div.className = 'form-group';
+            div.style.marginBottom = '0';
+            div.innerHTML = `
+                <label style="font-size:0.75em; color:#888; margin-bottom:4px;">ช่อง ${i}</label>
+                <input type="text" class="playerName" placeholder="ผู้แข่ง" style="padding:10px; font-size:0.95em; border-radius:6px; background:#111;">
+            `;
+            grid.appendChild(div);
+        }
+        zoneContainer.appendChild(grid);
+        zonesArea.appendChild(zoneContainer);
     }
+
     document.getElementById('playerInputs').style.display = 'block';
+};
+
+// ฟังก์ชันไม้ตาย: วางรายชื่อจาก Clipboard
+window.bulkPaste = () => {
+    const text = prompt("ก๊อปปี้รายชื่อเรียงบรรทัดกัน แล้วนำมาวางที่นี่:");
+    if(!text) return;
+    const names = text.split('\n').map(n => n.trim()).filter(n => n !== "");
+    const inputs = document.querySelectorAll('.playerName');
+    
+    let filled = 0;
+    for(let i=0; i<names.length; i++) {
+        if(inputs[i]) {
+            inputs[i].value = names[i];
+            filled++;
+        }
+    }
+    alert(`✅ วางรายชื่อเรียบร้อย ${filled} คน`);
 };
 
 window.initBracket = (players, matches = {}, zoneIdx = 0) => {

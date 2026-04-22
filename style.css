@@ -101,3 +101,15 @@ body { margin: 0; font-family: 'Inter', 'Kanit', sans-serif; background-color: v
 .img-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(5px); }
 .img-modal-content { margin: auto; display: block; max-height: 85vh; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 12px; }
 .close-modal { position: absolute; top: 30px; right: 40px; color: #fff; font-size: 40px; cursor: pointer; }
+
+/* =========================================
+   SETUP PAGE UX UPGRADES
+========================================= */
+.setup-tabs { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+.setup-tab { padding: 10px 25px; background: #1a1a24; border-radius: 10px; cursor: pointer; color: #888; border: 1px solid #333; font-weight: bold; transition: 0.2s; white-space: nowrap; }
+.setup-tab:hover { background: #222; }
+.setup-tab.active { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent-glow); }
+.name-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
+.zone-container { display: none; animation: fadeIn 0.3s; }
+.zone-container.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
