@@ -2,8 +2,7 @@ let tournamentData = { left: [], right: [] };
 let finalists = { left: "", right: "" };
 let grandChampion = "";
 
-// --- ส่วนของหน้าแรก (INDEX) ---
-function generateInputFields() {
+window.generateInputFields = function() {
     let count = parseInt(document.getElementById('playerCount').value);
     let container = document.getElementById('nameFields');
     container.innerHTML = ''; 
@@ -12,15 +11,13 @@ function generateInputFields() {
         container.innerHTML += `<div class="player-row"><input type="text" class="playerName" placeholder="${i}. ชื่อผู้แข่ง"></div>`;
     }
     document.getElementById('playerInputs').style.display = 'block';
-}
-window.generateInputFields = generateInputFields;
+};
 
-function autoFillNames(count) {
+window.autoFillNames = function(count) {
     document.querySelectorAll('.playerName').forEach((input, index) => input.value = `Player ${index + 1}`);
-}
-window.autoFillNames = autoFillNames;
+};
 
-async function saveAndGoToBracket() {
+window.saveAndGoToBracket = async function() {
     let players = Array.from(document.querySelectorAll('.playerName')).map(i => i.value.trim()).filter(v => v !== "");
     if (players.length < 2) return alert("ใส่ชื่ออย่างน้อย 2 คน");
     
@@ -29,7 +26,7 @@ async function saveAndGoToBracket() {
         [players[i], players[j]] = [players[j], players[i]];
     }
     
-    // ปัดเศษผู้เล่นให้เต็มผัง (เช่น 14 คน ปัดเป็น 16 และเติม BYE)
+    // คำนวณสายการแข่งขันให้เต็มผัง
     let p = Math.max(4, Math.pow(2, Math.ceil(Math.log2(players.length))));
     while(players.length < p) { players.push("BYE"); }
 
@@ -37,20 +34,20 @@ async function saveAndGoToBracket() {
     let leftP = players.slice(0, mid);
     let rightP = players.slice(mid);
     
-    // ฟังก์ชันสร้างโครงสร้างรอบล่วงหน้าทั้งหมด
-    function buildRoundsArray(initial) {
-        let rounds = [initial];
-        let nextSize = initial.length / 2;
+    // สร้างตารางเปล่ามารอไว้เลย
+    function buildSide(pList) {
+        let side = [pList];
+        let nextSize = pList.length / 2;
         while(nextSize >= 2) {
-            rounds.push(new Array(nextSize).fill(""));
+            side.push(new Array(nextSize).fill("รอผลการแข่งขัน"));
             nextSize /= 2;
         }
-        return rounds;
+        return side;
     }
 
     let initialData = {
-        left: buildRoundsArray(leftP).map(r => ({ p: r })), 
-        right: buildRoundsArray(rightP).map(r => ({ p: r })),
+        left: buildSide(leftP).map(r => ({ p: r })), 
+        right: buildSide(rightP).map(r => ({ p: r })),
         finalists: { left: "", right: "" },
         grandChampion: "",
         createdAt: new Date().toISOString()
@@ -74,11 +71,9 @@ async function saveAndGoToBracket() {
     } catch (e) { 
         alert("❌ บันทึกไม่สำเร็จ: " + e.message); 
     }
-}
-window.saveAndGoToBracket = saveAndGoToBracket;
+};
 
-// --- ส่วนของการแสดงผล (ADMIN & LIVE) ---
-async function loadBracketFromFirebase() {
+window.loadBracketFromFirebase = async function() {
     const tourneyId = new URLSearchParams(window.location.search).get('id');
     if (!tourneyId) return;
     try {
@@ -92,8 +87,7 @@ async function loadBracketFromFirebase() {
             renderBracket();
         }
     } catch (e) { console.error(e); }
-}
-window.loadBracketFromFirebase = loadBracketFromFirebase;
+};
 
 function renderBracket() {
     let resultDiv = document.getElementById('result');
@@ -105,9 +99,9 @@ function renderBracket() {
             <div class="champion-title">🏆 CHAMPION</div>
             <div class="grand-champion-name">${grandChampion || "???"}</div>
             <div class="final-matchup">
-                <div class="player-slot ${!finalists.left ? 'waiting' : ''}" onclick="setGrandChampion('${finalists.left}')">${finalists.left || "รอผลฝั่งซ้าย"}</div>
+                <div class="player-slot ${!finalists.left || finalists.left==='รอผลการแข่งขัน' ? 'waiting' : ''}" onclick="setGrandChampion('${finalists.left}')">${finalists.left || "รอผลฝั่งซ้าย"}</div>
                 <div style="margin:5px; font-weight:bold; color:#ff4757; text-align:center;">VS</div>
-                <div class="player-slot ${!finalists.right ? 'waiting' : ''}" onclick="setGrandChampion('${finalists.right}')">${finalists.right || "รอผลฝั่งขวา"}</div>
+                <div class="player-slot ${!finalists.right || finalists.right==='รอผลการแข่งขัน' ? 'waiting' : ''}" onclick="setGrandChampion('${finalists.right}')">${finalists.right || "รอผลฝั่งขวา"}</div>
             </div>
         </div>
         <div class="side right-side" id="rightSide"></div>
@@ -137,22 +131,20 @@ function renderSide(rounds, containerId, sideName) {
     container.innerHTML = html;
 }
 
-function advancePlayer(side, roundIndex, name, matchIndex) {
+window.advancePlayer = function(side, roundIndex, name, matchIndex) {
     if (!name || name === "รอผลการแข่งขัน" || name === "BYE" || document.body.classList.contains("view-only")) return;
     if (roundIndex === tournamentData[side].length - 1) finalists[side] = name;
     else tournamentData[side][roundIndex + 1][matchIndex] = name;
     renderBracket();
-}
-window.advancePlayer = advancePlayer;
+};
 
-function setGrandChampion(name) {
-    if (!name || name.includes("รอ") || document.body.classList.contains("view-only")) return;
+window.setGrandChampion = function(name) {
+    if (!name || name.includes("รอผล") || document.body.classList.contains("view-only")) return;
     grandChampion = name;
     renderBracket();
-}
-window.setGrandChampion = setGrandChampion;
+};
 
-async function updateBracketData() {
+window.updateBracketData = async function() {
     const tourneyId = new URLSearchParams(window.location.search).get('id');
     try {
         await window.dbFunctions.updateDoc(window.dbFunctions.doc(window.db, "tournaments", tourneyId), {
@@ -162,10 +154,8 @@ async function updateBracketData() {
         });
         alert("✅ อัปเดตความคืบหน้าการแข่งแล้ว!");
     } catch (e) { alert("Error: " + e.message); }
-}
-window.updateBracketData = updateBracketData;
+};
 
-// --- สำหรับหน้า LIVE ลูกค้า ---
 window.renderLiveBracket = function(data) {
     let resultDiv = document.getElementById('result');
     if (!resultDiv) return;
@@ -180,9 +170,9 @@ window.renderLiveBracket = function(data) {
             <div class="champion-title">🏆 CHAMPION</div>
             <div class="grand-champion-name">${champion || "???"}</div>
             <div class="final-matchup">
-                <div class="player-slot ${!finalLeft ? 'waiting' : ''}">${finalLeft || "รอผลฝั่งซ้าย"}</div>
+                <div class="player-slot ${!finalLeft || finalLeft==='รอผลการแข่งขัน' ? 'waiting' : ''}">${finalLeft || "รอผลฝั่งซ้าย"}</div>
                 <div style="margin:5px; font-weight:bold; color:#ff4757; text-align:center;">VS</div>
-                <div class="player-slot ${!finalRight ? 'waiting' : ''}">${finalRight || "รอผลฝั่งขวา"}</div>
+                <div class="player-slot ${!finalRight || finalRight==='รอผลการแข่งขัน' ? 'waiting' : ''}">${finalRight || "รอผลฝั่งขวา"}</div>
             </div>
         </div>
         <div class="side right-side">${renderRoundsStatic(data.right.map(r => r.p))}</div>

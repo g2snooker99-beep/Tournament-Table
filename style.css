@@ -102,3 +102,11 @@ h2 { color: #00d4ff; text-align: center; text-transform: uppercase; }
     background: transparent !important;
     color: #666 !important;
 }
+.player-slot.waiting {
+    color: #666 !important;
+    font-size: 0.85em;
+    cursor: not-allowed !important;
+}
+.player-slot.waiting:hover {
+    background: transparent !important;
+}
