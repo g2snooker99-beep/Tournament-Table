@@ -1,0 +1,28 @@
+body { 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    background-color: #f4f7f6; 
+    color: #333; 
+    padding: 20px; 
+    display: flex; 
+    justify-content: center; 
+}
+.container { 
+    background: #fff; 
+    padding: 30px; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+    width: 100%; 
+    max-width: 600px; 
+}
+h2, h3 { color: #2c3e50; text-align: center; }
+.input-group { display: flex; gap: 10px; margin-bottom: 20px; margin-top: 10px; }
+input { flex: 1; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; }
+button { padding: 10px 15px; font-size: 16px; background-color: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; transition: 0.3s; }
+button:hover { background-color: #0056b3; }
+.btn-generate { background-color: #28a745; width: 100%; margin-top: 15px; }
+.btn-generate:hover { background-color: #218838; }
+.btn-save { background-color: #fd7e14; width: 100%; margin-top: 15px; font-weight: bold; }
+.btn-save:hover { background-color: #e86e10; }
+.box { border: 1px solid #e9ecef; padding: 20px; border-radius: 8px; margin-top: 20px; background-color: #fafafa; }
+.player-row { display: flex; gap: 10px; margin-bottom: 10px; }
+.match-line { padding: 8px; border-bottom: 1px dashed #ccc; }
