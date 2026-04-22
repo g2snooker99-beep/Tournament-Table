@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | จัดการผู้สมัคร</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container" style="max-width: 1000px;">
+        <div class="dashboard-header">
+            <h2 style="margin:0; color: #00d4ff;">⚙️ ระบบหลังบ้าน (Admin)</h2>
+            <select id="campaignSelect" class="select-campaign" onchange="loadRegistrations()">
+                <option value="">-- โหลดรายการแข่งขัน... --</option>
+            </select>
+        </div>
+
+        <div id="statsArea" style="display:none; margin-bottom: 20px; color: #aaa;">
+            📊 ผู้สมัครทั้งหมด: <span id="totalCount" style="color:#fff; font-weight:bold;">0</span> คน | 
+            ✅ อนุมัติแล้ว: <span id="approvedCount" style="color:#28a745; font-weight:bold;">0</span> คน
+        </div>
+
+        <div id="playerGrid" class="card-grid">
+            <p style="text-align:center; grid-column: 1 / -1; color:#666;">กรุณาเลือกรายการแข่งขันด้านบนเพื่อดูผู้สมัคร</p>
+        </div>
+    </div>
+
+    <div id="slipModal" class="img-modal">
+        <span class="close-modal" onclick="closeModal()">&times;</span>
+        <img class="img-modal-content" id="fullSlipImg">
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, where, onSnapshot, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        
+        // *** ใส่ API KEY ให้ตรงกับหน้าอื่นๆ ด้วยนะครับ ***
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY", 
+            authDomain: "tournament-table-45dca.firebaseapp.com",
+            projectId: "tournament-table-45dca",
+            storageBucket: "tournament-table-45dca.appspot.com",
+            messagingSenderId: "SENDER_ID",
+            appId: "APP_ID"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        let unsubscribe = null; // ตัวแปรสำหรับหยุดดึงข้อมูล Real-time
+
+        // 1. โหลดรายชื่อแคมเปญทั้งหมดมาใส่ Dropdown
+        async function loadCampaigns() {
+            const select = document.getElementById('campaignSelect');
+            try {
+                const querySnapshot = await getDocs(collection(db, "campaigns"));
+                select.innerHTML = '<option value="">-- เลือกรายการแข่งขัน --</option>';
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    select.innerHTML += `<option value="${doc.id}">${data.name}</option>`;
+                });
+            } catch (error) {
+                console.error("Error loading campaigns: ", error);
+                select.innerHTML = '<option value="">❌ โหลดข้อมูลล้มเหลว</option>';
+            }
+        }
+
+        // 2. ดึงข้อมูลคนสมัครแบบ Real-time ตามแคมเปญที่เลือก
+        window.loadRegistrations = () => {
+            const cid = document.getElementById('campaignSelect').value;
+            const grid = document.getElementById('playerGrid');
+            const stats = document.getElementById('statsArea');
+            
+            if (!cid) { 
+                grid.innerHTML = '<p style="text-align:center; grid-column: 1 / -1; color:#666;">กรุณาเลือกรายการแข่งขันด้านบนเพื่อดูผู้สมัคร</p>'; 
+                stats.style.display = 'none';
+                if(unsubscribe) unsubscribe();
+                return; 
+            }
+
+            stats.style.display = 'block';
+            grid.innerHTML = '<p style="text-align:center; grid-column: 1 / -1; color:#00d4ff;">⏳ กำลังโหลดข้อมูล...</p>';
+
+            // เคลียร์การเชื่อมต่อเก่าก่อน
+            if (unsubscribe) unsubscribe();
+
+            const q = query(collection(db, "registrations"), where("campaignId", "==", cid));
+            
+            // onSnapshot คือฟังก์ชันสุดยอดที่ทำให้มัน Real-time
+            unsubscribe = onSnapshot(q, (snapshot) => {
+                grid.innerHTML = '';
+                let total = 0; let approved = 0;
+
+                if (snapshot.empty) {
+                    grid.innerHTML = '<p style="text-align:center; grid-column: 1 / -1; color:#666;">ยังไม่มีผู้สมัครในรายการนี้</p>';
+                    document.getElementById('totalCount').innerText = 0;
+                    document.getElementById('approvedCount').innerText = 0;
+                    return;
+                }
+
+                snapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const id = docSnap.id;
+                    total++;
+                    if (data.status === 'approved') approved++;
+
+                    // แปลงสถานะเป็นข้อความและสี
+                    let statusText = "รอตรวจสอบ"; let statusClass = "status-pending";
+                    if (data.status === 'approved') { statusText = "✅ อนุมัติแล้ว"; statusClass = "status-approved"; }
+                    if (data.status === 'rejected') { statusText = "❌ ปฏิเสธ"; statusClass = "status-rejected"; }
+
+                    // วาดการ์ดผู้เล่น
+                    grid.innerHTML += `
+                        <div class="player-card">
+                            <span class="status-badge ${statusClass}">${statusText}</span>
+                            <h3 style="color:#fff; margin-top:0;">👤 ${data.playerName}</h3>
+                            <p style="margin:5px 0; color:#aaa;">📞 ${data.phone}</p>
+                            <p style="margin:5px 0; color:#aaa;">👕 ไซส์เสื้อ: <strong style="color:#00d4ff;">${data.jerseySize}</strong></p>
+                            
+                            <img src="${data.paymentSlip}" class="slip-thumbnail" onclick="openModal('${data.paymentSlip}')" title="คลิกเพื่อขยายดูสลิป">
+                            
+                            <div style="display:flex; gap:10px; margin-top:15px;">
+                                <button onclick="updateStatus('${id}', 'approved')" style="background:#28a745; border:none; padding:10px; color:white; border-radius:5px; cursor:pointer; flex:1; font-weight:bold;">อนุมัติ</button>
+                                <button onclick="updateStatus('${id}', 'rejected')" style="background:#dc3545; border:none; padding:10px; color:white; border-radius:5px; cursor:pointer; flex:1; font-weight:bold;">ปฏิเสธ</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('totalCount').innerText = total;
+                document.getElementById('approvedCount').innerText = approved;
+            });
+        };
+
+        // 3. ฟังก์ชันเปลี่ยนสถานะ (อนุมัติ / ปฏิเสธ)
+        window.updateStatus = async (docId, newStatus) => {
+            const confirmMsg = newStatus === 'approved' ? "ยืนยันการอนุมัติผู้สมัครท่านนี้?" : "ยืนยันที่จะปฏิเสธและตัดสิทธิ์ผู้สมัครท่านนี้?";
+            if (!confirm(confirmMsg)) return;
+
+            try {
+                await updateDoc(doc(db, "registrations", docId), { status: newStatus });
+            } catch (error) {
+                alert("เกิดข้อผิดพลาด: " + error.message);
+            }
+        };
+
+        // ระบบ ป๊อปอัป ขยายรูป
+        window.openModal = (imgSrc) => {
+            document.getElementById('slipModal').style.display = 'block';
+            document.getElementById('fullSlipImg').src = imgSrc;
+        };
+        window.closeModal = () => {
+            document.getElementById('slipModal').style.display = 'none';
+        };
+
+        // รันฟังก์ชันโหลดแคมเปญตอนเปิดหน้าเว็บ
+        window.onload = loadCampaigns;
+    </script>
+</body>
+</html>
