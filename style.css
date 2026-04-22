@@ -21,7 +21,7 @@ body {
 }
 
 .bracket-visual { 
-    display: flex; align-items: center; gap: 60px; 
+    display: flex; align-items: center; gap: 80px; 
     transition: all 0.5s ease-in-out; 
 }
 
@@ -31,7 +31,7 @@ body {
 /* ปรับ Matchup ให้ใหญ่ขึ้นเพื่อรองรับคนเยอะแต่โชว์ทีละส่วน */
 .matchup { 
     background: #16161e; padding: 12px; border-radius: 12px; 
-    border: 1px solid #333; min-width: 220px; 
+    border: 1px solid #333; min-width: 250px; 
     box-shadow: 0 10px 20px rgba(0,0,0,0.5);
 }
 
