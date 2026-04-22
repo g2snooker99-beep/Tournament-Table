@@ -2,10 +2,23 @@ function generateInputFields() {
     let count = parseInt(document.getElementById('playerCount').value);
     let container = document.getElementById('nameFields');
     container.innerHTML = ''; 
+    
+    // เพิ่มปุ่มสุ่มชื่ออัตโนมัติไว้ด้านบนของช่องกรอก
+    let autoFillBtn = `<button type="button" onclick="autoFillNames(${count})" style="background:#6c757d; margin-bottom:15px; width:100%;">🪄 สุ่มชื่ออัตโนมัติสำหรับ ${count} คน</button>`;
+    container.innerHTML = autoFillBtn;
+
     for (let i = 1; i <= count; i++) {
         container.innerHTML += `<div class="player-row"><input type="text" class="playerName" placeholder="Player ${i}"></div>`;
     }
     document.getElementById('playerInputs').style.display = 'block';
+}
+
+// ฟังก์ชันใหม่: ใส่ชื่อให้อัตโนมัติ
+function autoFillNames(count) {
+    let inputs = document.querySelectorAll('.playerName');
+    inputs.forEach((input, index) => {
+        input.value = `Player ${index + 1}`;
+    });
 }
 
 function shuffleArray(array) {
@@ -42,7 +55,7 @@ function generateBracket() {
     // Byes / Round 2
     let byePlayers = players.slice(r1_count);
     if (byePlayers.length > 0 || r1_count > 0) {
-        let r2HTML = `<div class="round"><div class="round-title">Next Round</div>`;
+        let r2HTML = `<div class="round"><div class="round-title">Round 2 / Byes</div>`;
         byePlayers.forEach(name => {
             r2HTML += `<div class="matchup"><div class="player-slot">${name}</div><div class="player-slot" style="color:#555"><i>Waiting...</i></div></div>`;
         });
@@ -61,6 +74,6 @@ async function saveToFirebase() {
         const docRef = await addDoc(collection(window.db, "tournaments"), tournamentDataToSave);
         alert("✅ บันทึกสำเร็จ ID: " + docRef.id);
     } catch (e) {
-        alert("❌ พัง: " + e.message);
+        alert("❌ บันทึกไม่สำเร็จ: " + e.message);
     }
 }
