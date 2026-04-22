@@ -13,171 +13,121 @@
         </h2>
         
         <div style="text-align: center; margin-bottom: 25px;">
-            <button onclick="window.location.href='dashboard.html'" style="background:rgba(255,255,255,0.1); color:white; padding:10px 20px; border-radius:12px; border:1px solid var(--glass-border); cursor:pointer; transition: 0.3s;">
+            <button onclick="window.location.href='dashboard.html'" style="background:rgba(255,255,255,0.1); color:white; padding:10px 20px; border-radius:12px; border:1px solid var(--glass-border); cursor:pointer;">
                 ⬅ กลับแผงควบคุมแอดมิน
             </button>
         </div>
 
         <div class="form-container" style="margin-bottom:25px; max-width: 800px;">
-            <label style="color:var(--accent); font-weight:bold; display:block; margin-bottom:10px;">เลือกรายการแข่งขันที่ต้องการจัดการ:</label>
-            <div style="display:flex; gap:15px; align-items: center;">
-                <select id="campaignSelectSetup" class="campaign-selector" style="flex:1;" onchange="checkExistingSetup()">
-                    <option value="">-- กำลังโหลดรายการแข่งขัน... --</option>
-                </select>
-                <div id="syncStatus" style="font-size: 0.85em; color: var(--text-dim);"></div>
-            </div>
+            <label style="color:var(--accent); font-weight:bold; display:block; margin-bottom:10px;">เลือกรายการแข่งขัน:</label>
+            <select id="campaignSelectSetup" class="campaign-selector" style="width:100%;" onchange="checkExistingSetup()">
+                <option value="">-- กำลังโหลดรายการแข่งขัน... --</option>
+            </select>
+            <div id="syncStatus" style="font-size: 0.85em; color: var(--text-dim); margin-top:10px;"></div>
         </div>
 
-        <div id="mainSetupArea" style="display:none;">
+        <div id="setupArea" style="display:none;">
             <div class="form-container" style="margin-bottom:25px; max-width: 800px; border-left: 4px solid var(--accent);">
-                <h3 style="margin-top:0; color:var(--accent); font-size: 1.1em;">📥 เครื่องมือดึงรายชื่อผู้สมัคร</h3>
-                <p style="font-size: 0.85em; color: var(--text-dim); margin-bottom: 15px;">
-                    ระบบจะดึงเฉพาะคนที่คุณ "อนุมัติ" แล้ว และทำการสุ่มลำดับให้ให้อัตโนมัติ
-                </p>
+                <h3 style="margin-top:0; color:var(--accent);">📥 เครื่องมือดึงรายชื่อ</h3>
                 <div style="display:flex; gap:10px;">
-                    <button id="fetchBtn" class="btn-confirm" style="background: linear-gradient(135deg, #00d4ff 0%, #007bff 100%); flex:1;">
-                        ดึงรายชื่อและสุ่มตำแหน่ง (Randomize)
-                    </button>
-                    <button onclick="clearAllInputs()" style="background:rgba(220, 53, 69, 0.1); color:#dc3545; border:1px solid #dc3545; padding:10px; border-radius:8px; cursor:pointer;">
-                        ล้างกระดาน
-                    </button>
+                    <button id="fetchBtn" class="btn-confirm" style="flex:1;">สุ่มรายชื่อจากยอดสมัคร (Randomize)</button>
+                    <button onclick="clearAllInputs()" style="background:rgba(220, 53, 69, 0.1); color:#dc3545; border:1px solid #dc3545; padding:10px; border-radius:8px; cursor:pointer;">ล้างกระดาน</button>
                 </div>
             </div>
 
             <div class="form-container" style="max-width: 800px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <h3 style="margin:0; font-size: 1.1em;">📝 รายชื่อนักกีฬาในตาราง</h3>
+                    <h3 style="margin:0;">📝 รายชื่อในตาราง</h3>
                     <div style="display:flex; align-items:center; gap:10px;">
-                        <span style="font-size:0.9em; color:var(--text-dim);">จำนวนช่อง:</span>
-                        <input type="number" id="playerCount" value="32" min="2" style="width:70px; padding:5px; text-align:center;" onchange="generateInputFields()">
+                        <span>จำนวนช่อง:</span>
+                        <input type="number" id="playerCount" value="32" min="2" style="width:70px; text-align:center;" onchange="generateInputFields()">
                     </div>
                 </div>
 
                 <div id="playerInputs">
+                    <div id="autoFillArea" style="display:none;"></div>
                     <div id="nameFields" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
-                    
-                    <div style="margin-top:30px; padding:20px; background:rgba(0,0,0,0.3); border-radius:15px; border:1px solid var(--glass-border);">
-                        <button class="btn-generate" onclick="saveAndGoToBracket()" id="saveBtn">
-                            🎲 บันทึกและสร้างสายการแข่งขัน (Update Bracket)
-                        </button>
-                        <p style="text-align:center; font-size:0.8em; color:var(--text-dim); margin-top:10px;">
-                            * ข้อมูลจะถูกอัปเดตไปยังหน้า Live Link ทันทีที่บันทึก
-                        </p>
-                    </div>
+                    <button class="btn-generate" onclick="saveAndGoToBracket()" id="saveBtn">💾 บันทึกและอัปเดตสายการแข่งขัน</button>
                 </div>
             </div>
         </div>
 
         <div id="linkDisplayArea" style="display:none; margin-top:25px;" class="info-box">
-            <h3 style="color:var(--status-success); margin-top:0;">✅ สายการแข่งขันอัปเดตแล้ว</h3>
-            <div style="background:rgba(0,0,0,0.3); padding:20px; border-radius:12px; border:1px solid var(--glass-border);">
-                <p>🔗 <b>Link สำหรับแอดมินจัดการผล:</b></p>
-                <span id="adminUrl" style="color:var(--accent); word-break:break-all; font-weight:bold; display:block; margin:10px 0;"></span>
-                <p style="margin-top:20px;">📺 <b>Link สำหรับเปิดโชว์บนจอ (Live):</b></p>
-                <span id="liveUrl" style="color:var(--accent); word-break:break-all; font-weight:bold; display:block; margin:10px 0;"></span>
+            <h3 style="color:var(--status-success); margin-top:0;">✅ อัปเดตข้อมูลสำเร็จ</h3>
+            <div style="background:rgba(0,0,0,0.3); padding:20px; border-radius:12px;">
+                <p>🔗 <b>Admin Link (จัดการผล):</b></p>
+                <span id="adminUrl" style="color:var(--accent); word-break:break-all; font-weight:bold;"></span>
+                <p style="margin-top:15px;">📺 <b>Live Link (โชว์บนจอ):</b></p>
+                <span id="liveUrl" style="color:var(--accent); word-break:break-all; font-weight:bold;"></span>
             </div>
         </div>
     </div>
 
     <script type="module">
-        import { db, collection, addDoc, getDoc, getDocs, updateDoc, doc, query, where, onSnapshot } from "./firebase-config.js?v=3";
+        import { db, collection, addDoc, getDoc, getDocs, updateDoc, doc, query, where, onSnapshot } from "./firebase-config.js?v=4";
         window.db = db;
         window.dbFunctions = { collection, addDoc, getDoc, getDocs, updateDoc, doc, query, where, onSnapshot };
 
-        // 1. โหลดรายชื่อแคมเปญ
         async function loadCampaigns() {
             const select = document.getElementById('campaignSelectSetup');
             try {
                 const querySnapshot = await getDocs(collection(db, "campaigns"));
                 select.innerHTML = '<option value="">-- เลือกรายการแข่งขัน --</option>';
-                querySnapshot.forEach((doc) => {
-                    select.innerHTML += `<option value="${doc.id}">${doc.data().name}</option>`;
-                });
-            } catch (error) { console.error(error); }
+                querySnapshot.forEach((doc) => { select.innerHTML += `<option value="${doc.id}">${doc.data().name}</option>`; });
+            } catch (e) { console.error(e); }
         }
 
-        // 2. เช็คว่ารายการนี้เคยจัดสายไว้หรือยัง
         window.checkExistingSetup = async () => {
             const cid = document.getElementById('campaignSelectSetup').value;
-            const mainArea = document.getElementById('mainSetupArea');
+            const setupArea = document.getElementById('setupArea');
             const syncStatus = document.getElementById('syncStatus');
-            
-            if (!cid) { mainArea.style.display = 'none'; return; }
-            
-            mainArea.style.display = 'block';
+            if (!cid) { setupArea.style.display = 'none'; return; }
+            setupArea.style.display = 'block';
             syncStatus.innerText = "⏳ กำลังดึงข้อมูลล่าสุด...";
 
-            try {
-                // ค้นหาในคอลเลกชัน tournaments ว่ามีอันที่ผูกกับ campaignId นี้ไหม
-                const q = query(collection(db, "tournaments"), where("campaignId", "==", cid));
-                const snap = await getDocs(q);
-                
-                if (!snap.empty) {
-                    const tourneyData = snap.docs[0].data();
-                    document.getElementById('playerCount').value = tourneyData.players.length;
-                    window.generateInputFields();
-                    
-                    const inputs = document.querySelectorAll('.playerName');
-                    tourneyData.players.forEach((p, idx) => {
-                        if (inputs[idx]) inputs[idx].value = p.name || "";
-                    });
-                    syncStatus.innerHTML = "✅ โหลดสถานะล่าสุดเรียบร้อย";
-                } else {
-                    syncStatus.innerHTML = "✨ รายการใหม่ (ยังไม่ได้จัดสาย)";
-                    window.generateInputFields();
-                }
-            } catch (e) { console.error(e); }
+            const q = query(collection(db, "tournaments"), where("campaignId", "==", cid));
+            const snap = await getDocs(q);
+            if (!snap.empty) {
+                const tourney = snap.docs[0].data();
+                document.getElementById('playerCount').value = tourney.players.length;
+                window.generateInputFields();
+                const inputs = document.querySelectorAll('.playerName');
+                tourney.players.forEach((p, i) => { if(inputs[i]) inputs[i].value = p.name || ""; });
+                syncStatus.innerHTML = "✅ โหลดสถานะล่าสุดจากฐานข้อมูลแล้ว";
+            } else {
+                syncStatus.innerHTML = "✨ รายการใหม่ (ยังไม่มีการจัดสาย)";
+                window.generateInputFields();
+            }
         };
 
-        // 3. ระบบดึงรายชื่อและสุ่มลำดับ (Randomize)
         document.getElementById('fetchBtn').addEventListener('click', async () => {
             const cid = document.getElementById('campaignSelectSetup').value;
             if (!cid) return;
-
             const btn = document.getElementById('fetchBtn');
             btn.innerText = "⏳ กำลังสุ่มรายชื่อ...";
-            
             try {
                 const q = query(collection(db, "registrations"), where("campaignId", "==", cid), where("status", "==", "approved"));
-                const snapshot = await getDocs(q);
-                
+                const snap = await getDocs(q);
                 let players = [];
-                snapshot.forEach(doc => { players.push(doc.data().playerName); });
-
-                if (players.length === 0) {
-                    alert("ไม่พบผู้อนุมัติในรายการนี้");
-                    btn.innerText = "ดึงรายชื่อและสุ่มตำแหน่ง (Randomize)";
-                    return;
-                }
-
-                // --- อัลกอริทึมสุ่มรายชื่อ (Fisher-Yates Shuffle) ---
+                snap.forEach(d => { players.push(d.data().playerName); });
+                if (players.length === 0) { alert("ไม่พบรายชื่อที่อนุมัติ"); btn.innerText = "สุ่มรายชื่อจากยอดสมัคร"; return; }
+                
+                // Shuffle
                 for (let i = players.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
                     [players[i], players[j]] = [players[j], players[i]];
                 }
 
                 const inputs = document.querySelectorAll('.playerName');
-                // ล้างชื่อเก่าออกก่อน
                 inputs.forEach(input => input.value = "");
-                // ใส่ชื่อใหม่ที่สุ่มแล้วลงไป
-                players.forEach((name, index) => {
-                    if(inputs[index]) inputs[index].value = name;
-                });
-
-                alert(`🎯 สุ่มรายชื่อ ${players.length} คน ลงตารางเรียบร้อย!`);
-                btn.innerText = "ดึงรายชื่อและสุ่มตำแหน่ง (Randomize)";
-
+                players.forEach((name, i) => { if(inputs[i]) inputs[i].value = name; });
+                btn.innerText = "สุ่มรายชื่อจากยอดสมัคร (Randomize)";
             } catch (e) { alert(e.message); }
         });
 
-        window.clearAllInputs = () => {
-            if(confirm("ต้องการล้างรายชื่อทั้งหมดในตารางใช่หรือไม่?")) {
-                document.querySelectorAll('.playerName').forEach(i => i.value = "");
-            }
-        };
-
+        window.clearAllInputs = () => { if(confirm("ล้างชื่อทั้งหมด?")) document.querySelectorAll('.playerName').forEach(i => i.value = ""); };
         window.onload = loadCampaigns;
     </script>
-    <script src="script.js?v=3"></script>
+    <script src="script.js?v=4"></script>
 </body>
 </html>
