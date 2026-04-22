@@ -35,7 +35,7 @@ window.initBracket = (players, matches = {}, zoneIdx = 0) => {
     for (let r = 0; r < 3; r++) {
         const matchesInRound = 8 / Math.pow(2, r); // 8, 4, 2 แมตช์ต่อฝั่ง
         leftSide.appendChild(createZoneRound(r, matchesInRound, `L-Z${zoneIdx}`, zonePlayers, 0));
-        rightSide.appendChild(createZoneRound(r, matchesInRound, `R-Z${zoneIdx}`, zonePlayers, 16)); // 🎉 แก้จุดนี้: ใส่ Offset 16 ให้ฝั่งขวา 🎉
+        rightSide.prepend(createZoneRound(r, matchesInRound, `R-Z${zoneIdx}`, zonePlayers, 16)); // 🎉 แก้จุดนี้: ใส่ Offset 16 ให้ฝั่งขวา 🎉
     }
 
     const zoneWinnerKey = `winner-zone-${zoneIdx}`;

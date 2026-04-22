@@ -55,3 +55,24 @@ body {
 /* ส่วนของหน้า Setup/Admin ให้เหมือนเดิม */
 .form-container { background: var(--card-bg); padding: 20px; border-radius: 15px; margin: 10px auto; max-width: 800px; border: 1px solid var(--glass-border); }
 input, select { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; margin-top: 5px; }
+
+/* ปรับแต่งพิเศษสำหรับตารางฝั่งขวาให้เรียงจากนอกเข้าใน */
+.right-side .round {
+    flex-direction: column;
+}
+
+.right-side .matchup {
+    flex-direction: column;
+    align-items: flex-end; /* ให้ชื่อชิดขวา */
+}
+
+.right-side .player-slot {
+    border-left: none;
+    border-right: 5px solid var(--accent); /* ย้ายขีดเรืองแสงไปไว้ด้านขวา */
+    text-align: right;
+    flex-direction: row-reverse; /* สลับตำแหน่งชื่อกับคะแนน (ถ้ามี) */
+}
+
+.right-side .player-slot:not(.waiting) {
+    border-right-color: var(--accent);
+}
