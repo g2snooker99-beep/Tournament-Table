@@ -13,7 +13,7 @@ h2 { color: #00d4ff; text-align: center; text-transform: uppercase; }
     align-items: center; 
     gap: 20px; 
     margin-top: 30px; 
-    overflow-x: auto;
+    overflow: visible;
     padding: 40px 0;
 }
 
@@ -109,4 +109,18 @@ h2 { color: #00d4ff; text-align: center; text-transform: uppercase; }
 }
 .player-slot.waiting:hover {
     background: transparent !important;
+}
+
+/* กรอบห่อหุ้มสำหรับการย่อส่วนอัตโนมัติ */
+#bracketWrapper {
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+}
+
+.bracket-visual {
+    transform-origin: top center;
+    transition: transform 0.3s ease-in-out;
 }

@@ -26,7 +26,6 @@ window.saveAndGoToBracket = async function() {
         [players[i], players[j]] = [players[j], players[i]];
     }
     
-    // คำนวณสายการแข่งขันให้เต็มผัง
     let p = Math.max(4, Math.pow(2, Math.ceil(Math.log2(players.length))));
     while(players.length < p) { players.push("BYE"); }
 
@@ -34,7 +33,6 @@ window.saveAndGoToBracket = async function() {
     let leftP = players.slice(0, mid);
     let rightP = players.slice(mid);
     
-    // สร้างตารางเปล่ามารอไว้เลย
     function buildSide(pList) {
         let side = [pList];
         let nextSize = pList.length / 2;
@@ -93,21 +91,24 @@ function renderBracket() {
     let resultDiv = document.getElementById('result');
     if (!resultDiv) return;
     resultDiv.innerHTML = `
-    <div class="bracket-visual">
-        <div class="side left-side" id="leftSide"></div>
-        <div class="champion-area">
-            <div class="champion-title">🏆 CHAMPION</div>
-            <div class="grand-champion-name">${grandChampion || "???"}</div>
-            <div class="final-matchup">
-                <div class="player-slot ${!finalists.left || finalists.left==='รอผลการแข่งขัน' ? 'waiting' : ''}" onclick="setGrandChampion('${finalists.left}')">${finalists.left || "รอผลฝั่งซ้าย"}</div>
-                <div style="margin:5px; font-weight:bold; color:#ff4757; text-align:center;">VS</div>
-                <div class="player-slot ${!finalists.right || finalists.right==='รอผลการแข่งขัน' ? 'waiting' : ''}" onclick="setGrandChampion('${finalists.right}')">${finalists.right || "รอผลฝั่งขวา"}</div>
+    <div id="bracketWrapper">
+        <div class="bracket-visual">
+            <div class="side left-side" id="leftSide"></div>
+            <div class="champion-area">
+                <div class="champion-title">🏆 CHAMPION</div>
+                <div class="grand-champion-name">${grandChampion || "???"}</div>
+                <div class="final-matchup">
+                    <div class="player-slot ${!finalists.left || finalists.left==='รอผลการแข่งขัน' ? 'waiting' : ''}" onclick="setGrandChampion('${finalists.left}')">${finalists.left || "รอผลฝั่งซ้าย"}</div>
+                    <div style="margin:5px; font-weight:bold; color:#ff4757; text-align:center;">VS</div>
+                    <div class="player-slot ${!finalists.right || finalists.right==='รอผลการแข่งขัน' ? 'waiting' : ''}" onclick="setGrandChampion('${finalists.right}')">${finalists.right || "รอผลฝั่งขวา"}</div>
+                </div>
             </div>
+            <div class="side right-side" id="rightSide"></div>
         </div>
-        <div class="side right-side" id="rightSide"></div>
     </div>`;
     renderSide(tournamentData.left, "leftSide", "left");
     renderSide(tournamentData.right, "rightSide", "right");
+    setTimeout(window.scaleBracket, 50); // สั่งให้ย่อขนาดหลังวาดเสร็จ
 }
 
 function renderSide(rounds, containerId, sideName) {
@@ -164,19 +165,22 @@ window.renderLiveBracket = function(data) {
     const finalRight = data.finalists.right;
 
     resultDiv.innerHTML = `
-    <div class="bracket-visual">
-        <div class="side left-side">${renderRoundsStatic(data.left.map(r => r.p))}</div>
-        <div class="champion-area">
-            <div class="champion-title">🏆 CHAMPION</div>
-            <div class="grand-champion-name">${champion || "???"}</div>
-            <div class="final-matchup">
-                <div class="player-slot ${!finalLeft || finalLeft==='รอผลการแข่งขัน' ? 'waiting' : ''}">${finalLeft || "รอผลฝั่งซ้าย"}</div>
-                <div style="margin:5px; font-weight:bold; color:#ff4757; text-align:center;">VS</div>
-                <div class="player-slot ${!finalRight || finalRight==='รอผลการแข่งขัน' ? 'waiting' : ''}">${finalRight || "รอผลฝั่งขวา"}</div>
+    <div id="bracketWrapper">
+        <div class="bracket-visual">
+            <div class="side left-side">${renderRoundsStatic(data.left.map(r => r.p))}</div>
+            <div class="champion-area">
+                <div class="champion-title">🏆 CHAMPION</div>
+                <div class="grand-champion-name">${champion || "???"}</div>
+                <div class="final-matchup">
+                    <div class="player-slot ${!finalLeft || finalLeft==='รอผลการแข่งขัน' ? 'waiting' : ''}">${finalLeft || "รอผลฝั่งซ้าย"}</div>
+                    <div style="margin:5px; font-weight:bold; color:#ff4757; text-align:center;">VS</div>
+                    <div class="player-slot ${!finalRight || finalRight==='รอผลการแข่งขัน' ? 'waiting' : ''}">${finalRight || "รอผลฝั่งขวา"}</div>
+                </div>
             </div>
+            <div class="side right-side">${renderRoundsStatic(data.right.map(r => r.p))}</div>
         </div>
-        <div class="side right-side">${renderRoundsStatic(data.right.map(r => r.p))}</div>
     </div>`;
+    setTimeout(window.scaleBracket, 50); // สั่งให้ย่อขนาดหลังวาดเสร็จ
 };
 
 function renderRoundsStatic(rounds) {
@@ -193,3 +197,25 @@ function renderRoundsStatic(rounds) {
         return html;
     }).join('');
 }
+
+// === ระบบย่อขนาดอัตโนมัติ (Auto-Scale) ===
+window.scaleBracket = function() {
+    const wrapper = document.getElementById('bracketWrapper');
+    const visual = document.querySelector('.bracket-visual');
+    if (!wrapper || !visual) return;
+    
+    // รีเซ็ตขนาดเป็น 100% เพื่อวัดความกว้างที่แท้จริงก่อน
+    visual.style.transform = 'scale(1)';
+    
+    const availableWidth = wrapper.clientWidth;
+    const requiredWidth = visual.scrollWidth + 40; // เผื่อขอบไว้ 40px
+    
+    // ถ้ายาวเกินจอ ให้ย่อส่วนลงมา
+    if (requiredWidth > availableWidth) {
+        const scale = availableWidth / requiredWidth;
+        visual.style.transform = `scale(${scale})`;
+    }
+};
+
+// สั่งให้คำนวณใหม่ทุกครั้งที่ขยาย/ย่อ หน้าต่างเบราว์เซอร์
+window.addEventListener('resize', window.scaleBracket);
