@@ -78,6 +78,13 @@
                     window.initBracket(window.currentPlayers, window.currentMatches, window.currentZoneIdx);
                 };
                 nav.appendChild(btn);
+            const finalBtn = document.createElement("button");
+            finalBtn.innerText = "🏆 รอบชิงชนะเลิศ (GRAND FINAL)";
+            finalBtn.className = `zone-btn ${window.currentZoneIdx === 99 ? "active" : "inactive"}`;
+            finalBtn.style.background = "linear-gradient(135deg, #ffd700 0%, #b8860b 100%)";
+            finalBtn.style.color = "#000";
+            finalBtn.onclick = () => { window.currentZoneIdx = 99; renderZoneNav(totalPlayers); window.initBracket(window.currentPlayers, window.currentMatches, 99); };
+            nav.appendChild(finalBtn);
             }
         }
 
