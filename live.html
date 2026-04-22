@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tournament-Table Live - ผลการแข่งขันสด</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* ปรับแต่งพิเศษสำหรับหน้าลูกค้า: ซ่อน Cursor และห้ามคลิก */
+        .player-slot { cursor: default !important; pointer-events: none; }
+        .container { border: none; box-shadow: none; background: transparent; }
+    </style>
+</head>
+<body class="view-only">
+    <div class="container" style="max-width: 100%;">
+        <h2 id="tourneyTitle" style="text-align:center; font-size: 2.5em; color: #ffcc00; margin-bottom: 30px;">
+            🎱 LIVE TOURNAMENT SCORE
+        </h2>
+        <div id="result"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSy...", 
+            authDomain: "tournament-table-45dca.firebaseapp.com",
+            projectId: "tournament-table-45dca",
+            storageBucket: "tournament-table-45dca.appspot.com",
+            messagingSenderId: "...",
+            appId: "..."
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // ระบบ Real-time: เมื่อแอดมินกดบันทึก หน้าจอลูกค้าจะอัปเดตอัตโนมัติ!
+        const urlParams = new URLSearchParams(window.location.search);
+        const tourneyId = urlParams.get('id');
+
+        if (tourneyId) {
+            onSnapshot(doc(db, "tournaments", tourneyId), (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    window.renderLiveBracket(data);
+                }
+            });
+        }
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>

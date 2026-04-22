@@ -3,23 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>G2 Tournament - Entry</title>
+    <title>Tournament-Table | Entry</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h2>🎱 G2 Snooker Tournament</h2>
-        <p style="text-align:center;">ระบุจำนวนผู้สมัครและรายชื่อเพื่อเริ่มจัดการแข่งขัน</p>
+        <h2>🏆 Tournament-Table</h2>
+        <p style="text-align:center;">ระบบจัดการสายการแข่งขันอัตโนมัติ</p>
         
-        <div class="input-group">
-            <input type="number" id="playerCount" value="16" min="2">
-            <button class="btn-confirm" onclick="generateInputFields()">ยืนยันจำนวน</button>
+        <div id="setupArea">
+            <div class="input-group">
+                <input type="number" id="playerCount" value="16" min="2">
+                <button class="btn-confirm" onclick="generateInputFields()">ยืนยันจำนวนผู้แข่ง</button>
+            </div>
+
+            <div id="playerInputs" style="display: none;">
+                <div id="autoFillArea" style="text-align:center; margin-bottom:15px;"></div>
+                <div id="nameFields"></div>
+                <button class="btn-generate" onclick="saveAndGoToBracket()" id="saveBtn">💾 สร้างและบันทึกสายการแข่งขัน</button>
+            </div>
         </div>
 
-        <div id="playerInputs" style="display: none;">
-            <div id="autoFillArea" style="text-align:center; margin-bottom:15px;"></div>
-            <div id="nameFields"></div>
-            <button class="btn-generate" onclick="saveAndGoToBracket()" id="saveBtn">💾 บันทึกและสร้างสายการแข่งขัน</button>
+        <div id="linkDisplayArea" style="display:none;" class="link-box">
+            <h3 style="color:#00d4ff; margin-top:0;">✅ สร้างทัวร์นาเมนต์สำเร็จ</h3>
+            <p>🔗 <b>Admin Link (สำหรับจัดการผล):</b></p>
+            <span id="adminUrl" class="url-text"></span>
+            
+            <p>📺 <b>Live Link (สำหรับแสดงผล):</b></p>
+            <span id="liveUrl" class="url-text"></span>
+            
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button onclick="window.location.reload()" style="background:#444;">สร้างใหม่</button>
+                <button id="goToAdminBtn" class="btn-confirm">ไปหน้าแอดมิน ➔</button>
+            </div>
         </div>
     </div>
 
@@ -27,12 +43,12 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         const firebaseConfig = {
-            apiKey: "AIzaSy...", 
+            apiKey: "YOUR_API_KEY", 
             authDomain: "tournament-table-45dca.firebaseapp.com",
             projectId: "tournament-table-45dca",
             storageBucket: "tournament-table-45dca.appspot.com",
-            messagingSenderId: "...",
-            appId: "..."
+            messagingSenderId: "SENDER_ID",
+            appId: "APP_ID"
         };
         const app = initializeApp(firebaseConfig);
         window.db = getFirestore(app);

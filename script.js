@@ -135,3 +135,57 @@ async function updateBracketData() {
         alert("✅ อัปเดตความคืบหน้าการแข่งแล้ว!");
     } catch (e) { alert("Error: " + e.message); }
 }
+
+// ฟังก์ชันพิเศษสำหรับหน้า Live ของลูกค้า
+window.renderLiveBracket = function(data) {
+    let resultDiv = document.getElementById('result');
+    if (!resultDiv) return;
+
+    // แปลงข้อมูลกลับจากรูปแบบ Firebase Object
+    const leftRounds = data.left.map(r => r.p);
+    const rightRounds = data.right.map(r => r.p);
+    const champion = data.grandChampion;
+    const finalLeft = data.finalists.left;
+    const finalRight = data.finalists.right;
+
+    resultDiv.innerHTML = `
+    <div class="bracket-visual">
+        <div class="side left-side">
+            ${renderRoundsStatic(leftRounds)}
+        </div>
+        <div class="champion-area">
+            <div class="champion-title">🏆 CHAMPION</div>
+            <div class="grand-champion-name">${champion || "???"}</div>
+            <div class="final-matchup">
+                <div class="player-slot">${finalLeft || "รอผลฝั่งซ้าย"}</div>
+                <div style="margin:5px; font-weight:bold; color:#ff4757; text-align:center;">VS</div>
+                <div class="player-slot">${finalRight || "รอผลฝั่งขวา"}</div>
+            </div>
+        </div>
+        <div class="side right-side">
+            ${renderRoundsStatic(rightRounds)}
+        </div>
+    </div>`;
+};
+
+function renderRoundsStatic(rounds) {
+    return rounds.map((roundPlayers, roundIndex) => `
+        <div class="round">
+            <div class="round-title">Round ${roundIndex + 1}</div>
+            ${renderMatchesStatic(roundPlayers, roundIndex)}
+        </div>
+    `).join('');
+}
+
+function renderMatchesStatic(players, roundIndex) {
+    let html = '';
+    for (let i = 0; i < players.length; i += 2) {
+        let p1 = players[i] || "<i>TBD</i>";
+        let p2 = players[i+1] || (roundIndex === 0 ? "<i>BYE</i>" : "<i>TBD</i>");
+        html += `<div class="matchup">
+            <div class="player-slot">${p1}</div>
+            <div class="player-slot">${p2}</div>
+        </div>`;
+    }
+    return html;
+}
