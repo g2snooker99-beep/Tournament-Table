@@ -66,7 +66,7 @@
     <script type="module">
         import { db, collection, addDoc, getDoc, getDocs, updateDoc, doc, query, where, onSnapshot } from "./firebase-config.js?v=4";
         window.db = db;
-        window.dbFunctions = { collection, addDoc, getDoc, getDocs, updateDoc, doc, query, where, onSnapshot };
+        window.dbFunctions = { db, collection, addDoc, getDoc, getDocs, updateDoc, doc, query, where, onSnapshot };
 
         async function loadCampaigns() {
             const select = document.getElementById('campaignSelectSetup');
