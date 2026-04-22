@@ -67,7 +67,12 @@ window.initBracket = (players, matches = {}, zoneIdx = 0) => {
     if (zoneIdx === 99) {
         visual.innerHTML = `
             <div class="side left-side"><div class="round"><div class="matchup">${createFinalSlot(0,"A")}${createFinalSlot(1,"B")}</div></div></div>
-            <div class="champion-area"><div class="zone-tag" style="background:var(--gold)">GRAND FINAL</div><div class="grand-champion-name">${window.currentMatches['grand-champion'] || "???"}</div><div class="matchup">${createFinalWinnerSlot("sf-1","sf-2")}</div></div>
+            <div class="champion-area">
+                <div class="zone-tag" style="background:var(--gold)">GRAND FINAL</div>
+                <div style="color:var(--gold); font-size:1.2em; margin-bottom:10px;">🏆 THE CHAMPION 🏆</div>
+                <div class="grand-champion-name" style="font-size:3em; cursor:pointer;" title="ดับเบิลคลิกเพื่อลบแชมป์" ondblclick="if(isAdmin()) { delete window.currentMatches['grand-champion']; window.initBracket(window.currentPlayers, window.currentMatches, 99); }">${window.currentMatches['grand-champion'] || "???"}</div>
+                <div class="matchup" style="margin-top:20px; border-color:var(--gold);">${createFinalWinnerSlot("sf-1","sf-2")}</div>
+            </div>
             <div class="side right-side"><div class="round"><div class="matchup">${createFinalSlot(2,"C")}${createFinalSlot(3,"D")}</div></div></div>
         `;
     } else {
@@ -82,8 +87,12 @@ window.initBracket = (players, matches = {}, zoneIdx = 0) => {
         const winKey = `winner-zone-${zoneIdx}`;
         const LFinal = `match-L-Z${zoneIdx}-R3-M0`; const RFinal = `match-R-Z${zoneIdx}-R3-M0`;
         const champArea = document.createElement('div'); champArea.className = 'champion-area';
-        champArea.innerHTML = `<div class="zone-tag">ZONE ${String.fromCharCode(65+zoneIdx)}</div><div class="grand-champion-name">${window.currentMatches[winKey] || "รอผล"}</div>
-            <div class="matchup" style="border-color:var(--accent);">
+        champArea.innerHTML = `
+            <div class="zone-tag">ZONE ${String.fromCharCode(65+zoneIdx)}</div>
+            <div style="color:var(--gold); font-size:1.1em; margin-bottom:10px;">🏆 ผู้ชนะประจำโซน 🏆</div>
+            <div class="grand-champion-name" style="font-size:2.2em; cursor:pointer;" title="ดับเบิลคลิกเพื่อลบแชมป์" ondblclick="if(isAdmin()) { delete window.currentMatches['${winKey}']; window.initBracket(window.currentPlayers, window.currentMatches, window.currentZoneIdx); }">${window.currentMatches[winKey] || "รอผล"}</div>
+            <div style="margin-top:30px; font-size:0.9em; color:#888;">แมตช์ชิงแชมป์โซน</div>
+            <div class="matchup" style="margin-top:10px; border-color:var(--accent);">
                 <div class="player-slot ${!window.currentMatches[LFinal]?'waiting':''}" onclick="if(isAdmin()) selectZoneChamp('${zoneIdx}','${window.currentMatches[LFinal]}')">${window.currentMatches[LFinal]||"รอแชมป์ซ้าย"}</div>
                 <div class="player-slot ${!window.currentMatches[RFinal]?'waiting':''}" onclick="if(isAdmin()) selectZoneChamp('${zoneIdx}','${window.currentMatches[RFinal]}')">${window.currentMatches[RFinal]||"รอแชมป์ขวา"}</div>
             </div>`;
@@ -122,24 +131,27 @@ function createSlot(r, mKey, pIdx, players, offset) {
     if (name === "รอผล" || name === "BYE") slot.classList.add('waiting');
 
     if (isAdmin()) {
-        // คลิกเดียว: เลือกผู้ชนะ
         slot.onclick = () => {
-            if (name === "รอผล") return;
+            if (name === "รอผล" || name === "BYE") return;
             window.currentMatches[`match-${mKey}`] = name;
             window.initBracket(window.currentPlayers, window.currentMatches, window.currentZoneIdx || 0);
         };
-        // ดับเบิลคลิก: แก้ไขชื่อ / เพิ่มชื่อใหม่
+        // 🎯 ระบบดับเบิลคลิกเพื่อลบ/แก้ชื่อ
         slot.ondblclick = (e) => {
             e.stopPropagation();
-            const newName = prompt("แก้ไขชื่อนักกีฬา:", name === "BYE" || name === "รอผล" ? "" : name);
+            const newName = prompt("แก้ไขชื่อนักกีฬา (ลบข้อความออกให้ว่างเปล่าเพื่อ 'ยกเลิก' ผลคู่นี้):", name.includes("รอ") || name === "BYE" ? "" : name);
             if (newName !== null) {
-                const updatedName = newName.trim() === "" ? "BYE" : newName.trim();
+                const updatedName = newName.trim();
                 if (r === 0) {
                     const mIdx = parseInt(mKey.split('-M')[1]);
                     const pIdxInZone = (window.currentZoneIdx * 32) + offset + (mIdx * 2) + pIdx;
-                    window.currentPlayers[pIdxInZone] = { name: updatedName };
+                    window.currentPlayers[pIdxInZone] = { name: updatedName === "" ? "BYE" : updatedName };
                 } else {
-                    window.currentMatches[`match-${mKey}`] = updatedName;
+                    if (updatedName === "") {
+                        delete window.currentMatches[`match-${mKey}`]; // ลบผลการแข่งออก
+                    } else {
+                        window.currentMatches[`match-${mKey}`] = updatedName;
+                    }
                 }
                 window.initBracket(window.currentPlayers, window.currentMatches, window.currentZoneIdx || 0);
             }
@@ -149,10 +161,39 @@ function createSlot(r, mKey, pIdx, players, offset) {
 }
 
 window.selectZoneChamp = (zIdx, name) => {
-    if (!name || name.includes('รอ')) return;
+    if (!name || name.includes('รอ') || name === 'BYE') return;
     window.currentMatches[`winner-zone-${zIdx}`] = name;
     window.initBracket(window.currentPlayers, window.currentMatches, window.currentZoneIdx);
 };
+
+window.selectGrandChamp = (name) => {
+    if (!name || name.includes('รอ') || name === 'BYE') return;
+    window.currentMatches['grand-champion'] = name;
+    window.initBracket(window.currentPlayers, window.currentMatches, 99);
+};
+
+function createFinalSlot(idx, zoneLetter) {
+    const name = window.currentMatches[`winner-zone-${idx}`] || `รอแชมป์ ${zoneLetter}`;
+    const slot = document.createElement('div'); slot.className = `player-slot ${!window.currentMatches[`winner-zone-${idx}`] ? 'waiting' : ''}`;
+    slot.innerText = name;
+    if (isAdmin() && !name.includes('รอ')) {
+        slot.onclick = () => { window.currentMatches[`winner-sf-${idx < 2 ? 1 : 2}`] = name; window.initBracket(window.currentPlayers, window.currentMatches, 99); };
+        slot.ondblclick = (e) => { 
+            e.stopPropagation(); 
+            const n = prompt("แก้ไขชื่อ:", name); 
+            if(n!==null) { window.currentMatches[`winner-zone-${idx}`] = n.trim(); window.initBracket(window.currentPlayers, window.currentMatches, 99); }
+        };
+    }
+    return slot.outerHTML;
+}
+
+function createFinalWinnerSlot(id1, id2) {
+    const s1 = window.currentMatches[`winner-${id1}`]; const s2 = window.currentMatches[`winner-${id2}`];
+    return `
+        <div class="player-slot ${!s1?'waiting':''}" onclick="if(isAdmin()) selectGrandChamp('${s1||""}')" ondblclick="if(isAdmin()&&'${s1}') { delete window.currentMatches['winner-${id1}']; window.initBracket(window.currentPlayers, window.currentMatches, 99); }">${s1||"รอคู่ชิง 1"}</div>
+        <div class="player-slot ${!s2?'waiting':''}" onclick="if(isAdmin()) selectGrandChamp('${s2||""}')" ondblclick="if(isAdmin()&&'${s2}') { delete window.currentMatches['winner-${id2}']; window.initBracket(window.currentPlayers, window.currentMatches, 99); }">${s2||"รอคู่ชิง 2"}</div>
+    `;
+}
 
 window.saveAndGoToBracket = async () => {
     const btn = document.getElementById('saveBtn'); if(btn) btn.innerText = "⏳ บันทึก...";
@@ -173,7 +214,8 @@ window.saveAndGoToBracket = async () => {
         const base = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
         if(document.getElementById('adminUrl')) document.getElementById('adminUrl').innerText = `${base}bracket.html?id=${dId}`;
         if(document.getElementById('liveUrl')) document.getElementById('liveUrl').innerText = `${base}live.html?id=${dId}`;
-        document.getElementById('linkDisplayArea').style.display = 'block';
-    } catch (e) { alert(e.message); }
+        if(document.getElementById('linkDisplayArea')) document.getElementById('linkDisplayArea').style.display = 'block';
+        alert("✅ บันทึกเรียบร้อย!");
+    } catch (e) { alert("❌ " + e.message); }
     if(btn) btn.innerText = "💾 บันทึกสายการแข่งขัน";
 };
