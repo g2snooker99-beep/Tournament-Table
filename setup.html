@@ -8,25 +8,25 @@
 </head>
 <body>
     <div class="container">
-        <h2>🏆 จัดสายการแข่งขัน (Setup)</h2>
-        <button onclick="window.location.href='dashboard.html'" style="background:#444; color:white; padding:5px 10px; border-radius:5px; margin-bottom:15px; cursor:pointer;">⬅ กลับแผงควบคุม</button>
+        <h2 style="text-align: center; font-size: 2em; text-transform: uppercase; letter-spacing: 2px;">🏆 จัดสายการแข่งขัน (Setup)</h2>
+        <div style="text-align: center; margin-bottom: 25px;">
+            <button onclick="window.location.href='dashboard.html'" style="background:#333; color:white; padding:8px 15px; border-radius:8px; border:1px solid #555; cursor:pointer;">⬅ กลับแผงควบคุมแอดมิน</button>
+        </div>
 
-        <div style="background:#222; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid #00d4ff; box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);">
-            <h3 style="margin-top:0; color:#00d4ff;">📥 ดึงรายชื่อจากระบบรับสมัครอัตโนมัติ</h3>
+        <div class="form-container" style="margin-bottom:25px;">
+            <h3 style="margin-top:0; color:var(--accent);">📥 ดึงรายชื่อจากระบบรับสมัครอัตโนมัติ</h3>
             <div style="display:flex; gap:10px;">
-                <select id="campaignSelectSetup" style="flex:1; padding:10px; border-radius:5px; background:#333; color:white; border:1px solid #555;">
+                <select id="campaignSelectSetup" style="flex:1; padding:12px; border-radius:10px; background:rgba(0,0,0,0.5); color:white; border:1px solid var(--glass-border); font-family:inherit;">
                     <option value="">-- กำลังโหลดรายการแข่งขัน... --</option>
                 </select>
-                <button id="fetchBtn" style="background:#28a745; color:white; padding:10px 20px; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">ดึงรายชื่อ</button>
+                <button id="fetchBtn" class="btn-confirm" style="padding:10px 20px;">ดึงรายชื่อ</button>
             </div>
         </div>
 
-        <hr style="border-color:#444; margin:20px 0;">
-
-        <div id="setupArea">
-            <p style="text-align:center; color:#aaa;">ตั้งค่าจำนวน "ช่อง" ทั้งหมดที่ต้องการ (เช่น 32, 64)</p>
-            <div class="input-group">
-                <input type="number" id="playerCount" value="32" min="2">
+        <div class="form-container">
+            <p style="text-align:center; color:var(--text-dim); margin-top:0;">ตั้งค่าจำนวน "ช่อง" ทั้งหมดที่ต้องการ (เช่น 32, 64)</p>
+            <div style="display:flex; gap:10px; margin-bottom:20px;">
+                <input type="number" id="playerCount" value="32" min="2" style="flex:1;">
                 <button class="btn-confirm" onclick="generateInputFields()">ยืนยันจำนวนช่อง</button>
             </div>
 
@@ -37,25 +37,26 @@
             </div>
         </div>
 
-        <div id="linkDisplayArea" style="display:none;" class="link-box">
-            <h3 style="color:#00d4ff; margin-top:0;">✅ สร้างทัวร์นาเมนต์สำเร็จ</h3>
+        <div id="linkDisplayArea" style="display:none; margin-top:25px;" class="info-box">
+            <h3 style="color:var(--status-success); margin-top:0;">✅ สร้างทัวร์นาเมนต์สำเร็จ</h3>
             <p>🔗 <b>Admin Link (สำหรับจัดการผล):</b></p>
-            <span id="adminUrl" class="url-text"></span>
-            <p>📺 <b>Live Link (สำหรับลูกค้าดูผล):</b></p>
-            <span id="liveUrl" class="url-text"></span>
+            <span id="adminUrl" style="color:var(--accent); word-break:break-all; font-weight:bold;"></span>
+            <p style="margin-top:15px;">📺 <b>Live Link (สำหรับลูกค้าดูผล):</b></p>
+            <span id="liveUrl" style="color:var(--accent); word-break:break-all; font-weight:bold;"></span>
             
-            <div style="display:flex; gap:10px; margin-top:15px;">
-                <button onclick="window.location.reload()" style="background:#444;">สร้างรายการใหม่</button>
-                <button id="goToAdminBtn" class="btn-confirm">ไปหน้าจัดการผล ➔</button>
+            <div style="display:flex; gap:10px; margin-top:25px;">
+                <button onclick="window.location.reload()" style="background:#444; color:white; padding:12px; border-radius:10px; border:none; cursor:pointer; flex:1; font-weight:bold;">สร้างรายการใหม่</button>
+                <button id="goToAdminBtn" class="btn-confirm" style="flex:1;">ไปหน้าจัดการผล ➔</button>
             </div>
         </div>
     </div>
 
     <script type="module">
-        import { db, collection, getDocs, query, where } from "./firebase-config.js";
+        // แก้ไขการนำเข้า (Import) ให้ถูกต้องตามหลัก ES Modules รวบไว้บรรทัดเดียว
+        import { db, collection, addDoc, getDoc, getDocs, updateDoc, doc, query, where, onSnapshot, orderBy, limit } from "./firebase-config.js";
+        
+        // ส่งตัวแปรให้ script.js ใช้งาน
         window.db = db;
-        // ต้อง import ฟังก์ชันเหล่านี้มาเผื่อ script.js เรียกใช้
-        import { addDoc, getDoc, updateDoc, doc, onSnapshot, orderBy, limit } from "./firebase-config.js";
         window.dbFunctions = { collection, addDoc, getDoc, getDocs, updateDoc, doc, query, where, onSnapshot, orderBy, limit };
 
         async function loadCampaigns() {
@@ -68,6 +69,7 @@
                 });
             } catch (error) {
                 console.error("Error loading campaigns: ", error);
+                select.innerHTML = '<option value="">❌ ไม่สามารถเชื่อมต่อฐานข้อมูลได้</option>';
             }
         }
 
@@ -85,31 +87,25 @@
                 snapshot.forEach(doc => { players.push(doc.data().playerName); });
 
                 if (players.length === 0) {
-                    alert(`ยังไม่มีผู้อนุมัติในรายการนี้ กรุณาไปอนุมัติในหน้า Dashboard ก่อนครับ`);
+                    alert(`ยังไม่มีผู้อนุมัติในรายการนี้ กรุณาไปตรวจสอบสลิปในหน้า Dashboard ก่อนครับ`);
                     btn.innerText = "ดึงรายชื่อ";
                     return;
                 }
 
-                // 🌟 ลอจิกใหม่: อ่านค่าจำนวนช่องที่แอดมินตั้งไว้ 🌟
                 let targetCount = parseInt(document.getElementById('playerCount').value) || 32;
-                
-                // ถ้าระบบเจอว่าคนสมัครเยอะกว่าช่องที่เตรียมไว้ จะขยายช่องให้อัตโนมัติ
                 if (players.length > targetCount) {
                     targetCount = players.length;
                     document.getElementById('playerCount').value = targetCount;
                 }
 
-                // 1. วาดกล่องเปล่าๆ ตามจำนวนช่องที่ตั้งไว้ (เช่น ตั้งไว้ 32 ก็วาด 32 กล่อง)
                 window.generateInputFields();
 
-                // 2. หยอดชื่อที่ดึงมาลงไปในกล่อง (กล่องที่เหลือจะกลายเป็นกล่องว่าง)
                 const inputs = document.querySelectorAll('.playerName');
                 players.forEach((name, index) => {
                     if(inputs[index]) inputs[index].value = name;
                 });
 
-                // แจ้งเตือนแอดมินให้เข้าใจตรงกัน
-                alert(`✅ ดึงรายชื่อสำเร็จ ${players.length} คน!\n(มีช่องว่างเหลือเผื่อผู้สมัครหน้างาน ${targetCount - players.length} ช่อง)\n\n💡 คุณสามารถพิมพ์ชื่อเพิ่มในช่องว่างได้เลย หากปล่อยว่างไว้ระบบจะจัดคู่ให้เป็น "ได้บาย (BYE)" อัตโนมัติเมื่อกดสุ่มครับ`);
+                alert(`✅ ดึงรายชื่อสำเร็จ ${players.length} คน!\n(มีช่องว่างเหลือเผื่อผู้สมัครหน้างาน ${targetCount - players.length} ช่อง)\n\n💡 หากปล่อยช่องว่างไว้ ระบบจะจัดให้เป็น "ได้บาย (BYE)" อัตโนมัติเมื่อกดสุ่มครับ`);
                 btn.innerText = "ดึงรายชื่อ";
 
             } catch (e) {
