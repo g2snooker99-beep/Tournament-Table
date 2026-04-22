@@ -6,24 +6,11 @@
     <title>Tournament-Table | จัดการผล</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* ล็อคหน้าจอให้เต็ม 100% เสมอ */
         body { overflow: hidden; height: 100vh; margin: 0; background: var(--bg-dark); }
-        .bracket-full-container { 
-            display: flex; flex-direction: column; height: 100%; width: 100vw; padding: 20px; box-sizing: border-box;
-        }
-        /* แก้ปัญหาซ้ายแหว่ง: ปล่อยให้มันลอยอิสระแล้วใช้ margin auto ตรงลูกแทน */
-        #bracketWrapper {
-            flex: 1; overflow: auto; display: flex; align-items: flex-start; padding-top: 20px;
-        }
-        .bracket-visual { 
-            margin: auto; padding: 40px; /* margin auto จะช่วยดันให้อยู่ตรงกลางแบบไม่โดนตัด */
-        }
-        
-        /* สไตล์ปุ่มสลับโซน */
-        .zone-btn {
-            padding: 8px 20px; margin: 0 5px; border-radius: 8px; border: none; cursor: pointer;
-            font-weight: bold; transition: 0.2s; font-size: 1.1em;
-        }
+        .bracket-full-container { display: flex; flex-direction: column; height: 100%; width: 100vw; padding: 20px; box-sizing: border-box; }
+        #bracketWrapper { flex: 1; overflow: auto; display: flex; align-items: center; padding-top: 20px; }
+        .bracket-visual { margin: auto; padding: 40px; transition: 0.3s; }
+        .zone-btn { padding: 8px 20px; margin: 0 5px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 1.1em; }
         .zone-btn.active { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent-glow); transform: scale(1.05); }
         .zone-btn.inactive { background: #222; color: #aaa; border: 1px solid #444; }
         .zone-btn.inactive:hover { background: #333; color: #fff; }
@@ -32,95 +19,85 @@
 <body>
     <div class="bracket-full-container">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; flex-shrink: 0; background: var(--card-bg); padding: 15px 30px; border-radius: 15px; border: 1px solid var(--glass-border); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-            <button onclick="window.location.href='setup.html'" style="background:#333; color:white; padding:12px 20px; border-radius:10px; border:none; cursor:pointer; font-weight:bold;">⬅ กลับหน้าจัดสาย</button>
-            
+            <button onclick="window.location.href='setup.html'" style="background:#333; color:white; padding:12px 20px; border-radius:10px; border:none; cursor:pointer; font-weight:bold; transition:0.2s;" onmouseover="this.style.background='#555'" onmouseout="this.style.background='#333'">⬅ กลับหน้าจัดสาย</button>
             <div style="text-align: center;">
                 <h2 id="tournamentTitle" style="margin:0 0 15px 0; color:var(--accent); text-transform:uppercase; letter-spacing:2px;">🏆 โหลดข้อมูล...</h2>
-                <div id="zoneNav"></div> </div>
-
+                <div id="zoneNav" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;"></div>
+            </div>
             <button id="saveBtn" class="btn-confirm" style="padding:12px 30px;">💾 บันทึกผล</button>
         </div>
-
-        <div id="bracketWrapper">
-            <div id="bracket" class="bracket-visual"></div>
-        </div>
+        <div id="bracketWrapper"><div id="bracket" class="bracket-visual"></div></div>
     </div>
 
     <script type="module">
         import { db, doc, updateDoc, onSnapshot } from "./firebase-config.js";
-        
         const urlParams = new URLSearchParams(window.location.search);
         const tourneyId = urlParams.get('id');
-        window.currentZoneIdx = 0; // เก็บค่าว่าตอนนี้แอดมินดูโซนไหนอยู่
+        window.currentZoneIdx = 0;
 
-        if (!tourneyId) {
-            alert("ไม่พบรหัสการแข่งขัน!");
-            window.location.href = 'setup.html';
-        }
+        if (!tourneyId) { alert("ไม่พบรหัสการแข่งขัน!"); window.location.href = 'setup.html'; }
 
-        // ฟังก์ชันวาดปุ่ม ZONE A, B, C, D อัตโนมัติตามจำนวนคน
-        function renderZoneNav(totalPlayers) {
+        // ฟังก์ชันวาดปุ่มเมนู
+        window.renderZoneNav = (totalPlayers) => {
             const nav = document.getElementById('zoneNav');
             nav.innerHTML = '';
-            const totalZones = Math.ceil(totalPlayers / 32); // คำนวณว่ามีกี่โซน
+            const totalZones = Math.ceil(totalPlayers / 32);
+            if (totalZones <= 1) return;
             
-            if (totalZones <= 1) return; // ถ้ามี 32 คน (โซนเดียว) ไม่ต้องโชว์ปุ่ม
-            
+            // 1. สร้างปุ่ม Zone A-D (ทำใน Loop)
             for (let i = 0; i < totalZones; i++) {
                 const btn = document.createElement('button');
                 btn.innerText = `ZONE ${String.fromCharCode(65 + i)}`;
                 btn.className = `zone-btn ${i === window.currentZoneIdx ? 'active' : 'inactive'}`;
-                
-                // เมื่อกดปุ่ม ให้วาดตารางของโซนนั้นๆ ใหม่
                 btn.onclick = () => {
                     window.currentZoneIdx = i;
-                    renderZoneNav(totalPlayers); // อัปเดตสีปุ่ม
+                    window.renderZoneNav(totalPlayers);
                     window.initBracket(window.currentPlayers, window.currentMatches, window.currentZoneIdx);
                 };
                 nav.appendChild(btn);
-            const finalBtn = document.createElement("button");
-            finalBtn.innerText = "🏆 รอบชิงชนะเลิศ (GRAND FINAL)";
-            finalBtn.className = `zone-btn ${window.currentZoneIdx === 99 ? "active" : "inactive"}`;
-            finalBtn.style.background = "linear-gradient(135deg, #ffd700 0%, #b8860b 100%)";
-            finalBtn.style.color = "#000";
-            finalBtn.onclick = () => { window.currentZoneIdx = 99; renderZoneNav(totalPlayers); window.initBracket(window.currentPlayers, window.currentMatches, 99); };
-            nav.appendChild(finalBtn);
             }
-        }
+            
+            // 2. สร้างปุ่ม GRAND FINAL อันเดียวเดี่ยวๆ (ทำนอก Loop) 💥 แก้บั๊กตรงนี้ครับ 💥
+            const finalBtn = document.createElement('button');
+            finalBtn.innerText = "🏆 รอบชิงชนะเลิศ (GRAND FINAL)";
+            finalBtn.className = `zone-btn ${window.currentZoneIdx === 99 ? 'active' : 'inactive'}`;
+            if (window.currentZoneIdx === 99) {
+                finalBtn.style.background = "linear-gradient(135deg, #ffd700 0%, #b8860b 100%)";
+                finalBtn.style.color = "#000";
+                finalBtn.style.boxShadow = "0 0 15px rgba(255, 215, 0, 0.6)";
+                finalBtn.style.border = "none";
+            } else {
+                finalBtn.style.background = "#332b00";
+                finalBtn.style.color = "#ffd700";
+                finalBtn.style.border = "1px solid #ffd700";
+            }
+            finalBtn.onclick = () => {
+                window.currentZoneIdx = 99;
+                window.renderZoneNav(totalPlayers);
+                window.initBracket(window.currentPlayers, window.currentMatches, 99);
+            };
+            nav.appendChild(finalBtn);
+        };
 
-        // ดึงข้อมูลแบบ Real-time
         onSnapshot(doc(db, "tournaments", tourneyId), (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 const titleEl = document.getElementById('tournamentTitle');
-                if(titleEl && data.campaignName) titleEl.innerText = `🏆 ${data.campaignName}`; // (ชื่อแคมเปญจะยังไม่ขึ้นจนกว่าจะอัปเดตระบบ Setup ครั้งหน้า แต่ไม่เป็นไรใช้ชื่อไปก่อนได้)
-                
+                if(titleEl && data.campaignName) titleEl.innerText = `🏆 ${data.campaignName}`;
                 window.currentPlayers = data.players || [];
                 window.currentMatches = data.matches || {};
-                
-                renderZoneNav(window.currentPlayers.length);
-                
-                if (window.initBracket) {
-                    window.initBracket(window.currentPlayers, window.currentMatches, window.currentZoneIdx);
-                }
+                window.renderZoneNav(window.currentPlayers.length);
+                if (window.initBracket) window.initBracket(window.currentPlayers, window.currentMatches, window.currentZoneIdx);
             }
         });
 
-        // บันทึกผลกลับไปที่ฐานข้อมูล
         document.getElementById('saveBtn').onclick = async () => {
             const btn = document.getElementById('saveBtn');
             btn.innerText = "⏳ กำลังบันทึก...";
             try {
-                await updateDoc(doc(db, "tournaments", tourneyId), {
-                    matches: window.currentMatches,
-                    updatedAt: new Date()
-                });
+                await updateDoc(doc(db, "tournaments", tourneyId), { matches: window.currentMatches, updatedAt: new Date() });
                 alert("✅ บันทึกผลการแข่งขันเรียบร้อย!");
-            } catch (e) {
-                alert("เกิดข้อผิดพลาด: " + e.message);
-            } finally {
-                btn.innerText = "💾 บันทึกผล";
-            }
+            } catch (e) { alert("เกิดข้อผิดพลาด: " + e.message); } finally { btn.innerText = "💾 บันทึกผล"; }
         };
     </script>
     <script src="script.js"></script>

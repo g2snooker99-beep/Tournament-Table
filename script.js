@@ -65,18 +65,39 @@ window.initBracket = (players, matches = {}, zoneIdx = 0) => {
     const visual = document.createElement('div'); visual.className = 'bracket-visual';
 
     if (zoneIdx === 99) {
+        
+        visual.style.transform = "scale(1.1)"; // ขยายจอให้ใหญ่ขึ้น
         visual.innerHTML = `
-            <div class="side left-side"><div class="round"><div class="matchup">${createFinalSlot(0,"A")}${createFinalSlot(1,"B")}</div></div></div>
-            <div class="champion-area">
-                <div class="zone-tag" style="background:var(--gold)">GRAND FINAL</div>
-                <div style="color:var(--gold); font-size:1.2em; margin-bottom:10px;">🏆 THE CHAMPION 🏆</div>
-                <div class="grand-champion-name" style="font-size:3em; display:flex; align-items:center; justify-content:center;">
-                    <span class="slot-name">${window.currentMatches['grand-champion'] || "???"}</span>
-                    ${isAdmin() && window.currentMatches['grand-champion'] ? `<span class="delete-btn" onclick="if(confirm('ยกเลิกแชมป์รายการใช่หรือไม่?')){ delete window.currentMatches['grand-champion']; window.initBracket(window.currentPlayers, window.currentMatches, 99); }">✖</span>` : ''}
+            <div class="side left-side" style="margin-right: 30px;">
+                <div class="round">
+                    <div style="text-align:center; color:var(--accent); margin-bottom:15px; font-weight:900; letter-spacing:2px; font-size:1.2em; text-shadow:0 0 10px var(--accent-glow);">SEMI-FINAL 1</div>
+                    <div class="matchup" style="border: 2px solid var(--accent); box-shadow: 0 0 30px rgba(0,212,255,0.15); padding: 20px; border-radius: 15px; background: rgba(0,212,255,0.05);">
+                        ${createFinalSlot(0,"A")}
+                        ${createFinalSlot(1,"B")}
+                    </div>
                 </div>
-                <div class="matchup" style="margin-top:20px; border-color:var(--gold);">${createFinalWinnerSlot("sf-1","sf-2")}</div>
             </div>
-            <div class="side right-side"><div class="round"><div class="matchup">${createFinalSlot(2,"C")}${createFinalSlot(3,"D")}</div></div></div>
+            <div class="champion-area" style="padding: 50px; transform: scale(1.15); box-shadow: 0 0 60px rgba(255,215,0,0.15); background: radial-gradient(circle, rgba(255,215,0,0.1) 0%, rgba(0,0,0,0) 80%); border-width: 4px; z-index: 10;">
+                <div class="zone-tag" style="background:var(--gold); box-shadow: 0 0 20px var(--gold-glow); font-size:1.8em; padding: 10px 40px; margin-bottom:30px;">GRAND FINAL</div>
+                <div style="color:var(--gold); font-size:1.4em; margin-bottom:10px; text-transform:uppercase; letter-spacing:4px; font-weight:900;">🏆 THE CHAMPION 🏆</div>
+                <div class="grand-champion-name" style="font-size:4.5em; text-shadow: 0 0 30px var(--gold); display:flex; align-items:center; justify-content:center; margin-bottom: 40px;">
+                    <span class="slot-name">${window.currentMatches['grand-champion'] || "???"}</span>
+                    ${isAdmin() && window.currentMatches['grand-champion'] ? `<span class="delete-btn" style="font-size:24px; width:45px; height:45px; margin-left:20px;" onclick="if(confirm('ยกเลิกแชมป์รายการใช่หรือไม่?')){ delete window.currentMatches['grand-champion']; window.initBracket(window.currentPlayers, window.currentMatches, 99); }">✖</span>` : ''}
+                </div>
+                <div style="color:#aaa; margin-bottom:15px; font-size:1.1em; letter-spacing:2px; font-weight:bold;">CHAMPIONSHIP MATCH</div>
+                <div class="matchup" style="border: 3px solid var(--gold); box-shadow: 0 0 40px rgba(255,215,0,0.3); padding: 30px; border-radius: 15px; background: rgba(255,215,0,0.05);">
+                    ${createFinalWinnerSlot("sf-1","sf-2")}
+                </div>
+            </div>
+            <div class="side right-side" style="margin-left: 30px;">
+                <div class="round">
+                    <div style="text-align:center; color:var(--accent); margin-bottom:15px; font-weight:900; letter-spacing:2px; font-size:1.2em; text-shadow:0 0 10px var(--accent-glow);">SEMI-FINAL 2</div>
+                    <div class="matchup" style="border: 2px solid var(--accent); box-shadow: 0 0 30px rgba(0,212,255,0.15); padding: 20px; border-radius: 15px; background: rgba(0,212,255,0.05);">
+                        ${createFinalSlot(2,"C")}
+                        ${createFinalSlot(3,"D")}
+                    </div>
+                </div>
+            </div>
         `;
     } else {
         const startIdx = zoneIdx * 32; const zonePlayers = players.slice(startIdx, startIdx + 32);
@@ -197,14 +218,14 @@ function createFinalSlot(idx, zoneLetter) {
     if (isAdmin() && !isWaiting) {
         html += `<span class="delete-btn" onclick="event.stopPropagation(); if(confirm('ยกเลิกการดึงตัวแชมป์โซน ${zoneLetter} ใช่หรือไม่?')){ delete window.currentMatches['winner-sf-${idx < 2 ? 1 : 2}']; window.initBracket(window.currentPlayers, window.currentMatches, 99); }">✖</span>`;
     }
-    return `<div class="player-slot ${isWaiting ? 'waiting' : ''}" onclick="if(isAdmin() && !${isWaiting}){ window.currentMatches['winner-sf-${idx < 2 ? 1 : 2}'] = '${name}'; window.initBracket(window.currentPlayers, window.currentMatches, 99); }">${html}</div>`;
+    return `<div class="player-slot ${isWaiting ? 'waiting' : ''}" style="padding: 20px; font-size: 1.5em; margin-bottom: 15px;" onclick="if(isAdmin() && !${isWaiting}){ window.currentMatches['winner-sf-${idx < 2 ? 1 : 2}'] = '${name}'; window.initBracket(window.currentPlayers, window.currentMatches, 99); }">${html}</div>`;
 }
 
 function createFinalWinnerSlot(id1, id2) {
     const s1 = window.currentMatches[`winner-${id1}`]; const s2 = window.currentMatches[`winner-${id2}`];
     const html1 = s1 ? `<span class="slot-name">${s1}</span><span class="delete-btn" onclick="event.stopPropagation(); if(confirm('ยกเลิกผลคู่นี้?')){ delete window.currentMatches['winner-${id1}']; window.initBracket(window.currentPlayers, window.currentMatches, 99); }">✖</span>` : `<span class="slot-name">รอคู่ชิง 1</span>`;
     const html2 = s2 ? `<span class="slot-name">${s2}</span><span class="delete-btn" onclick="event.stopPropagation(); if(confirm('ยกเลิกผลคู่นี้?')){ delete window.currentMatches['winner-${id2}']; window.initBracket(window.currentPlayers, window.currentMatches, 99); }">✖</span>` : `<span class="slot-name">รอคู่ชิง 2</span>`;
-    return `<div class="player-slot ${!s1?'waiting':''}" onclick="if(isAdmin() && '${s1||""}') selectGrandChamp('${s1}')">${html1}</div><div class="player-slot ${!s2?'waiting':''}" onclick="if(isAdmin() && '${s2||""}') selectGrandChamp('${s2}')">${html2}</div>`;
+    return `<div class="player-slot ${!s1?'waiting':''}" style="padding: 25px; font-size: 1.8em; margin-bottom: 20px;" onclick="if(isAdmin() && '${s1||""}') selectGrandChamp('${s1}')">${html1}</div><div class="player-slot ${!s2?'waiting':''}" style="padding: 25px; font-size: 1.8em;" onclick="if(isAdmin() && '${s2||""}') selectGrandChamp('${s2}')">${html2}</div>`;
 }
 
 window.resetTournamentData = async () => { /* (คงฟังก์ชันล้างข้อมูลไว้) */ };
