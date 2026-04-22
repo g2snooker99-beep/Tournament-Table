@@ -3,33 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tournament Table Generator</title>
+    <title>G2 Tournament - Entry</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h2>🎱 Tournament Table Generator</h2>
+        <h2>🎱 G2 Snooker Tournament</h2>
+        <p style="text-align:center;">ระบุจำนวนผู้สมัครและรายชื่อเพื่อเริ่มจัดการแข่งขัน</p>
         
         <div class="input-group">
-            <input type="number" id="playerCount" value="16" min="2" max="256">
+            <input type="number" id="playerCount" value="16" min="2">
             <button class="btn-confirm" onclick="generateInputFields()">ยืนยันจำนวน</button>
         </div>
 
         <div id="playerInputs" style="display: none;">
             <div id="autoFillArea" style="text-align:center; margin-bottom:15px;"></div>
             <div id="nameFields"></div>
-            <button class="btn-generate" onclick="generateBracket()">สร้างสายการแข่งขัน (สุ่มจับคู่)</button>
+            <button class="btn-generate" onclick="saveAndGoToBracket()" id="saveBtn">💾 บันทึกและสร้างสายการแข่งขัน</button>
         </div>
-
-        <div id="result" class="box" style="display:none;"></div>
-        <button id="saveBtn" class="btn-save" style="display:none;" onclick="saveToFirebase()">💾 Save to Firebase</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        // *** ตรวจสอบค่าพวกนี้ใน Firebase Console อีกครั้งนะครับ ***
         const firebaseConfig = {
             apiKey: "AIzaSy...", 
             authDomain: "tournament-table-45dca.firebaseapp.com",
@@ -38,13 +34,10 @@
             messagingSenderId: "...",
             appId: "..."
         };
-
         const app = initializeApp(firebaseConfig);
         window.db = getFirestore(app);
         window.dbFunctions = { collection, addDoc };
-        console.log("🔥 Firebase Connected Successfully!");
     </script>
-    
     <script src="script.js"></script>
 </body>
 </html>

@@ -1,0 +1,41 @@
+cat << 'EOF' > bracket.html
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Bracket - G2 Tournament</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container" style="max-width: 100%;">
+        <div style="display:flex; justify-content: space-between; align-items: center;">
+            <button onclick="location.href='index.html'" style="background:#444; color:white;">⬅ กลับหน้าแรก</button>
+            <h2 id="tourneyTitle">กำลังโหลดข้อมูลสายแข่ง...</h2>
+            <button onclick="updateBracketData()" class="btn-confirm" style="background:#f39c12;">💾 บันทึกความคืบหน้า</button>
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        const firebaseConfig = {
+            apiKey: "AIzaSy...", 
+            authDomain: "tournament-table-45dca.firebaseapp.com",
+            projectId: "tournament-table-45dca",
+            storageBucket: "tournament-table-45dca.appspot.com",
+            messagingSenderId: "...",
+            appId: "..."
+        };
+        const app = initializeApp(firebaseConfig);
+        window.db = getFirestore(app);
+        window.dbFunctions = { doc, getDoc, updateDoc };
+        
+        // รันคำสั่งโหลดข้อมูลทันที
+        window.onload = loadBracketFromFirebase;
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
