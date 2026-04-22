@@ -22,15 +22,16 @@ async function saveAndGoToBracket() {
     let players = Array.from(document.querySelectorAll('.playerName')).map(i => i.value.trim()).filter(v => v !== "");
     if (players.length < 2) return alert("ใส่ชื่ออย่างน้อย 2 คน");
     
-    // สุ่มและแบ่งฝั่งครั้งแรก
     for (let i = players.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [players[i], players[j]] = [players[j], players[i]];
     }
     let mid = Math.ceil(players.length / 2);
+
+    // แก้ไขตรงนี้: ใช้ { players: ... } แทนการส่ง array ซ้อน array
     let initialData = {
-        left: [players.slice(0, mid)],
-        right: [players.slice(mid)],
+        left: [{ p: players.slice(0, mid) }], 
+        right: [{ p: players.slice(mid) }],
         finalists: { left: null, right: null },
         grandChampion: null,
         createdAt: new Date().toISOString()
@@ -40,9 +41,11 @@ async function saveAndGoToBracket() {
         const btn = document.getElementById('saveBtn');
         btn.innerText = "⏳ กำลังสร้างสายแข่ง...";
         const docRef = await window.dbFunctions.addDoc(window.dbFunctions.collection(window.db, "tournaments"), initialData);
-        // ย้ายหน้าไปยังหน้าตารางพร้อมส่ง ID ไปด้วย
         window.location.href = `bracket.html?id=${docRef.id}`;
-    } catch (e) { alert("Error: " + e.message); }
+    } catch (e) { 
+        console.error(e);
+        alert("❌ บันทึกไม่สำเร็จ! สาเหตุ: " + e.message); 
+    }
 }
 
 // --- หน้า BRACKET ---
@@ -55,10 +58,11 @@ async function loadBracketFromFirebase() {
         const docSnap = await window.dbFunctions.getDoc(window.dbFunctions.doc(window.db, "tournaments", tourneyId));
         if (docSnap.exists()) {
             const data = docSnap.data();
-            tournamentData = { left: data.left, right: data.right };
+            // ดึงข้อมูลกลับมาแปลงเป็นรูปแบบ array ที่เราใช้งาน
+            tournamentData.left = data.left.map(r => r.p);
+            tournamentData.right = data.right.map(r => r.p);
             finalists = data.finalists || { left: null, right: null };
             grandChampion = data.grandChampion || null;
-            document.getElementById('tourneyTitle').innerText = "ตารางการแข่งขัน G2";
             renderBracket();
         }
     } catch (e) { console.error(e); }
@@ -71,7 +75,7 @@ function renderBracket() {
     <div class="bracket-visual">
         <div class="side left-side" id="leftSide"></div>
         <div class="champion-area">
-            <div class="champion-title">🏆 CHAMPION</div>
+            <div class="champion-title">🏆 GRAND CHAMPION</div>
             <div class="grand-champion-name">${grandChampion || "???"}</div>
             <div class="final-matchup">
                 <div class="player-slot" onclick="setGrandChampion('${finalists.left}')">${finalists.left || "รอฝั่งซ้าย"}</div>
@@ -103,7 +107,7 @@ function renderSide(rounds, containerId, sideName) {
 }
 
 function advancePlayer(side, roundIndex, name, matchIndex) {
-    if (name.includes("TBD") || name.includes("BYE")) return;
+    if (!name || name.includes("TBD") || name.includes("BYE")) return;
     if (tournamentData[side][roundIndex].length <= 2) {
         finalists[side] = name;
     } else {
@@ -123,8 +127,8 @@ async function updateBracketData() {
     const tourneyId = new URLSearchParams(window.location.search).get('id');
     try {
         await window.dbFunctions.updateDoc(window.dbFunctions.doc(window.db, "tournaments", tourneyId), {
-            left: tournamentData.left,
-            right: tournamentData.right,
+            left: tournamentData.left.map(r => ({ p: r })),
+            right: tournamentData.right.map(r => ({ p: r })),
             finalists,
             grandChampion
         });
