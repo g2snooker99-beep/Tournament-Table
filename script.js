@@ -154,3 +154,29 @@ window.saveAndGoToBracket = async () => {
         }
     }
 };
+
+// 🎲 ฟังก์ชันสลับตำแหน่งรายชื่อในช่องกรอก
+window.shuffleInputs = () => {
+    const inputs = Array.from(document.querySelectorAll('.playerName'));
+    const values = inputs.map(input => input.value);
+    
+    // สลับตำแหน่งแบบสุ่ม (Fisher-Yates)
+    for (let i = values.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [values[i], values[j]] = [values[j], values[i]];
+    }
+    
+    // ใส่ค่ากลับคืนพร้อมเอฟเฟกต์กระพริบ
+    inputs.forEach((input, index) => {
+        input.value = values[index];
+        if(input.value.trim() !== "") {
+            input.style.transition = "0.3s";
+            input.style.borderColor = "var(--accent)";
+            input.style.boxShadow = "0 0 10px var(--accent-glow)";
+            setTimeout(() => {
+                input.style.borderColor = "#333";
+                input.style.boxShadow = "none";
+            }, 800);
+        }
+    });
+};
