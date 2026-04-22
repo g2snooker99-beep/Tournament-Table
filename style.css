@@ -45,3 +45,21 @@ h2 { color: #00d4ff; text-align: center; text-transform: uppercase; }
 .player-slot:last-child { border-bottom: none; }
 
 .btn-generate { background: #28a745; color: white; width: 100%; margin: 20px 0; font-size: 1.2em; cursor: pointer; }
+/* ไฮไลท์คนชนะ */
+.player-slot.winner {
+    background-color: #28a745 !important;
+    color: white !important;
+    font-weight: bold;
+}
+.player-slot:hover {
+    background-color: #444;
+    cursor: pointer;
+}
+/* ปรับปรุงกล่องให้น่ากดมากขึ้น */
+.matchup {
+    transition: all 0.2s;
+}
+.matchup:hover {
+    border-color: #00d4ff;
+    transform: scale(1.02);
+}
