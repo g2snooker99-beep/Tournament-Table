@@ -2,66 +2,43 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LIVE | Fit to Screen</title>
     <link rel="stylesheet" href="style.css">
+    <title>G2 LIVE | 100+ Players Mode</title>
 </head>
 <body>
     <div class="live-container">
-        <h1 id="liveTitle" style="text-align:center; color:var(--gold); margin: 5px 0; font-size: 1.5em;">Tournament Live Score</h1>
-        <div id="liveStatus" style="text-align:center; color:var(--accent); font-size: 0.8em; margin-bottom: 5px;">🔴 กำลังเชื่อมต่อ...</div>
-
         <div id="bracketWrapper">
-            <div id="bracket" class="bracket-visual"></div>
+            <div id="bracket"></div>
         </div>
     </div>
 
     <script type="module">
-        import { db, doc, onSnapshot, collection, query, orderBy, limit, getDocs } from "./firebase-config.js?v=6";
-
+        import { db, doc, onSnapshot } from "./firebase-config.js?v=7";
         const urlParams = new URLSearchParams(window.location.search);
-        let tourneyId = urlParams.get('id');
+        const tourneyId = urlParams.get('id');
+        let zoneIdx = 0;
 
-        function fitBracketToScreen() {
-            const wrapper = document.getElementById('bracketWrapper');
-            const bracket = document.getElementById('bracket');
-            if (!wrapper || !bracket) return;
+        if (tourneyId) {
+            onSnapshot(doc(db, "tournaments", tourneyId), (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const players = data.players;
+                    const matches = data.matches || {};
+                    const totalZones = Math.ceil(players.length / 32);
 
-            // คำนวณอัตราส่วนที่ต้องย่อเพื่อให้พอดีหน้าจอ
-            const scaleX = (wrapper.clientWidth - 40) / bracket.scrollWidth;
-            const scaleY = (wrapper.clientHeight - 40) / bracket.scrollHeight;
-            const finalScale = Math.min(scaleX, scaleY, 1); // ไม่ให้ขยายเกินขนาดจริง (1)
+                    // ฟังก์ชันสลับโซน
+                    const switchZone = () => {
+                        window.initBracket(players, matches, zoneIdx);
+                        zoneIdx = (zoneIdx + 1) % totalZones;
+                    };
 
-            bracket.style.transform = `scale(${finalScale})`;
+                    switchZone(); // รันครั้งแรก
+                    if (window.slideTimer) clearInterval(window.slideTimer);
+                    window.slideTimer = setInterval(switchZone, 15000); // สลับทุก 15 วินาที
+                }
+            });
         }
-
-        async function startLive() {
-            if (!tourneyId) {
-                const q = query(collection(db, "tournaments"), orderBy("updatedAt", "desc"), limit(1));
-                const snap = await getDocs(q);
-                if (!snap.empty) tourneyId = snap.docs[0].id;
-            }
-
-            if (tourneyId) {
-                onSnapshot(doc(db, "tournaments", tourneyId), (docSnap) => {
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        document.getElementById('liveTitle').innerText = data.campaignName || "G2 Snooker Cup";
-                        document.getElementById('liveStatus').innerText = `🔴 กำลังอัปเดตข้อมูลสด... (${new Date().toLocaleTimeString()})`;
-                        
-                        if (window.initBracket) {
-                            window.initBracket(data.players, data.matches || {});
-                            // รอให้ตารางวาดเสร็จแล้วค่อยสั่ง Fit
-                            setTimeout(fitBracketToScreen, 100);
-                        }
-                    }
-                });
-            }
-        }
-
-        window.addEventListener('resize', fitBracketToScreen);
-        startLive();
     </script>
-    <script src="script.js?v=6"></script>
+    <script src="script.js?v=7"></script>
 </body>
 </html>

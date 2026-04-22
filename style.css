@@ -1,73 +1,57 @@
 :root {
     --bg-dark: #0a0a0c;
-    --card-bg: rgba(22, 22, 26, 0.8);
+    --card-bg: rgba(22, 22, 26, 0.9);
     --glass-border: rgba(255, 255, 255, 0.1);
     --accent: #00d4ff;
-    --accent-glow: rgba(0, 212, 255, 0.4);
     --gold: #ffd700;
     --text-main: #ffffff;
-    --text-dim: #9ba1a6;
-    --status-success: #28a745;
 }
 
 body { 
-    margin: 0; font-family: 'Inter', 'Kanit', sans-serif; 
-    background: radial-gradient(circle at 50% 0%, #1a1a24 0%, #070709 70%); 
-    color: var(--text-main); min-height: 100vh;
+    margin: 0; font-family: 'Kanit', sans-serif; 
+    background: #070709; color: var(--text-main); 
+    height: 100vh; overflow: hidden; 
 }
 
-.container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+.live-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
 
-/* Form & Glassmorphism Styles */
-.form-container { 
-    background: var(--card-bg); backdrop-filter: blur(10px);
-    padding: 30px; border-radius: 20px; border: 1px solid var(--glass-border);
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5); margin-bottom: 25px;
-}
-input, select, textarea { 
-    width: 100%; padding: 12px; background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border);
-    border-radius: 8px; color: white; margin-top: 5px; box-sizing: border-box;
-}
-
-/* Bracket Layout (กางปีก E-Sports) */
 #bracketWrapper { 
-    width: 100%; overflow-x: auto; display: flex; justify-content: center; 
-    padding: 50px 0; min-height: 600px;
+    flex: 1; display: flex; justify-content: center; align-items: center; 
+    overflow: hidden; padding: 20px;
 }
-.bracket-visual { display: flex; align-items: center; gap: 40px; }
+
+.bracket-visual { 
+    display: flex; align-items: center; gap: 60px; 
+    transition: all 0.5s ease-in-out; 
+}
 
 .side { display: flex; gap: 40px; align-items: center; }
-.left-side { flex-direction: row; }
-.right-side { flex-direction: row-reverse; }
+.round { display: flex; flex-direction: column; justify-content: space-around; gap: 20px; height: 100%; }
 
-.round { display: flex; flex-direction: column; justify-content: space-around; gap: 30px; height: 100%; }
-
+/* ปรับ Matchup ให้ใหญ่ขึ้นเพื่อรองรับคนเยอะแต่โชว์ทีละส่วน */
 .matchup { 
-    background: #1a1a24; padding: 10px; border-radius: 10px; border: 1px solid #333;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5); min-width: 160px;
+    background: #16161e; padding: 12px; border-radius: 12px; 
+    border: 1px solid #333; min-width: 220px; 
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
 }
 
 .player-slot { 
-    background: #0d0d12; padding: 12px 15px; border-radius: 6px; margin: 4px 0;
-    font-weight: bold; border-left: 4px solid var(--accent); transition: 0.2s;
-    display: flex; justify-content: space-between; cursor: pointer;
+    background: #0d0d12; padding: 15px; border-radius: 8px; margin: 5px 0; 
+    font-weight: bold; border-left: 5px solid var(--accent); 
+    font-size: 1.3em; /* ตัวหนังสือใหญ่ขึ้น */
 }
-.player-slot:hover { background: #1a1a2f; border-color: var(--gold); }
-.player-slot.waiting { color: #555; border-left-color: #222; font-style: italic; cursor: default; }
+.player-slot.waiting { color: #444; border-left-color: #222; }
 
-/* Champion Area */
 .champion-area { 
-    text-align: center; padding: 40px; border: 2px solid var(--gold); 
-    border-radius: 20px; background: radial-gradient(circle, rgba(255,215,0,0.1) 0%, transparent 100%);
-    box-shadow: 0 0 40px rgba(255, 215, 0, 0.2); min-width: 280px;
+    text-align: center; padding: 30px; border: 3px solid var(--gold); 
+    border-radius: 30px; background: rgba(255,215,0,0.05);
+    min-width: 300px;
 }
-.grand-champion-name { 
-    font-size: 2.5em; color: #fff; font-weight: 900; 
-    text-shadow: 0 0 10px var(--gold), 0 0 30px var(--gold); margin: 20px 0;
+.zone-tag {
+    background: var(--accent); color: #000; padding: 5px 20px; 
+    border-radius: 50px; font-weight: 900; font-size: 1.5em; margin-bottom: 20px; display: inline-block;
 }
 
-/* Admin Dashboard Sidebar */
-.admin-wrapper { display: flex; height: 100vh; }
-.admin-sidebar { width: 260px; background: #0f0f12; border-right: 1px solid #222; }
-.admin-menu li { padding: 15px 25px; color: var(--text-dim); list-style: none; cursor: pointer; }
-.admin-menu li.active { color: var(--accent); background: rgba(0,212,255,0.1); border-left: 4px solid var(--accent); }
+/* ส่วนของหน้า Setup/Admin ให้เหมือนเดิม */
+.form-container { background: var(--card-bg); padding: 20px; border-radius: 15px; margin: 10px auto; max-width: 800px; border: 1px solid var(--glass-border); }
+input, select { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; margin-top: 5px; }
