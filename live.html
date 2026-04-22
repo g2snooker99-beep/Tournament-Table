@@ -3,17 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LIVE | ผลการแข่งขันสด</title>
+    <title>LIVE | Fit to Screen</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        body { overflow: hidden; } /* ป้องกันการเลื่อนหน้าจอสำหรับเปิดบน TV */
-        .player-slot { cursor: default !important; } /* ปิด cursor นิ้วมือ */
-    </style>
 </head>
 <body>
-    <div class="container" style="max-width: 100vw;">
-        <h1 id="liveTitle" style="text-align:center; color:var(--gold); text-shadow: 0 0 20px var(--gold-glow); margin-bottom:0;">Tournament Live Score</h1>
-        <p id="liveStatus" style="text-align:center; color:var(--accent); margin-bottom:30px;">🔴 กำลังดึงข้อมูลสด...</p>
+    <div class="live-container">
+        <h1 id="liveTitle" style="text-align:center; color:var(--gold); margin: 5px 0; font-size: 1.5em;">Tournament Live Score</h1>
+        <div id="liveStatus" style="text-align:center; color:var(--accent); font-size: 0.8em; margin-bottom: 5px;">🔴 กำลังเชื่อมต่อ...</div>
 
         <div id="bracketWrapper">
             <div id="bracket" class="bracket-visual"></div>
@@ -21,11 +17,23 @@
     </div>
 
     <script type="module">
-        import { db, doc, onSnapshot, collection, query, orderBy, limit, getDocs } from "./firebase-config.js?v=5";
+        import { db, doc, onSnapshot, collection, query, orderBy, limit, getDocs } from "./firebase-config.js?v=6";
 
-        // ลอจิก: ถ้าไม่มี ID ใน URL ให้ดึงรายการล่าสุดที่เพิ่งอัปเดตมาโชว์
         const urlParams = new URLSearchParams(window.location.search);
         let tourneyId = urlParams.get('id');
+
+        function fitBracketToScreen() {
+            const wrapper = document.getElementById('bracketWrapper');
+            const bracket = document.getElementById('bracket');
+            if (!wrapper || !bracket) return;
+
+            // คำนวณอัตราส่วนที่ต้องย่อเพื่อให้พอดีหน้าจอ
+            const scaleX = (wrapper.clientWidth - 40) / bracket.scrollWidth;
+            const scaleY = (wrapper.clientHeight - 40) / bracket.scrollHeight;
+            const finalScale = Math.min(scaleX, scaleY, 1); // ไม่ให้ขยายเกินขนาดจริง (1)
+
+            bracket.style.transform = `scale(${finalScale})`;
+        }
 
         async function startLive() {
             if (!tourneyId) {
@@ -38,14 +46,22 @@
                 onSnapshot(doc(db, "tournaments", tourneyId), (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
-                        document.getElementById('liveStatus').innerHTML = `🔴 LIVE: ${data.campaignName || 'กำลังแข่งขัน'}`;
-                        if (window.initBracket) window.initBracket(data.players, data.matches || {});
+                        document.getElementById('liveTitle').innerText = data.campaignName || "G2 Snooker Cup";
+                        document.getElementById('liveStatus').innerText = `🔴 กำลังอัปเดตข้อมูลสด... (${new Date().toLocaleTimeString()})`;
+                        
+                        if (window.initBracket) {
+                            window.initBracket(data.players, data.matches || {});
+                            // รอให้ตารางวาดเสร็จแล้วค่อยสั่ง Fit
+                            setTimeout(fitBracketToScreen, 100);
+                        }
                     }
                 });
             }
         }
+
+        window.addEventListener('resize', fitBracketToScreen);
         startLive();
     </script>
-    <script src="script.js?v=5"></script>
+    <script src="script.js?v=6"></script>
 </body>
 </html>
