@@ -9,7 +9,7 @@
 <body>
     <div class="container">
         <h2>🏆 จัดสายการแข่งขัน (Setup)</h2>
-        <button onclick="window.location.href='index.html'" style="background:#444; color:white; padding:5px 10px; border-radius:5px; margin-bottom:15px; cursor:pointer;">⬅ กลับหน้าแรก</button>
+        <button onclick="window.location.href='dashboard.html'" style="background:#444; color:white; padding:5px 10px; border-radius:5px; margin-bottom:15px; cursor:pointer;">⬅ กลับแผงควบคุม</button>
 
         <div style="background:#222; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid #00d4ff; box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);">
             <h3 style="margin-top:0; color:#00d4ff;">📥 ดึงรายชื่อจากระบบรับสมัครอัตโนมัติ</h3>
@@ -24,16 +24,16 @@
         <hr style="border-color:#444; margin:20px 0;">
 
         <div id="setupArea">
-            <p style="text-align:center; color:#aaa;">หรือ ระบุจำนวนและพิมพ์ชื่อเองแบบ Manual</p>
+            <p style="text-align:center; color:#aaa;">ตั้งค่าจำนวน "ช่อง" ทั้งหมดที่ต้องการ (เช่น 32, 64)</p>
             <div class="input-group">
-                <input type="number" id="playerCount" value="16" min="2">
-                <button class="btn-confirm" onclick="generateInputFields()">ยืนยันจำนวน</button>
+                <input type="number" id="playerCount" value="32" min="2">
+                <button class="btn-confirm" onclick="generateInputFields()">ยืนยันจำนวนช่อง</button>
             </div>
 
             <div id="playerInputs" style="display: none;">
                 <div id="autoFillArea" style="text-align:center; margin-bottom:15px;"></div>
                 <div id="nameFields"></div>
-                <button class="btn-generate" onclick="saveAndGoToBracket()" id="saveBtn">💾 สร้างและบันทึกสายการแข่งขัน</button>
+                <button class="btn-generate" onclick="saveAndGoToBracket()" id="saveBtn">🎲 สุ่มและสร้างสายการแข่งขัน</button>
             </div>
         </div>
 
@@ -46,29 +46,18 @@
             
             <div style="display:flex; gap:10px; margin-top:15px;">
                 <button onclick="window.location.reload()" style="background:#444;">สร้างรายการใหม่</button>
-                <button id="goToAdminBtn" class="btn-confirm">ไปหน้าแอดมิน ➔</button>
+                <button id="goToAdminBtn" class="btn-confirm">ไปหน้าจัดการผล ➔</button>
             </div>
         </div>
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        
-        // *** ⚠️ อย่าลืมแก้ API KEY ให้ตรงกับโปรเจกต์ของคุณนะครับ ***
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY", 
-            authDomain: "tournament-table-45dca.firebaseapp.com",
-            projectId: "tournament-table-45dca",
-            storageBucket: "tournament-table-45dca.appspot.com",
-            messagingSenderId: "SENDER_ID",
-            appId: "APP_ID"
-        };
-        const app = initializeApp(firebaseConfig);
-        window.db = getFirestore(app);
-        window.dbFunctions = { collection, addDoc };
+        import { db, collection, getDocs, query, where } from "./firebase-config.js";
+        window.db = db;
+        // ต้อง import ฟังก์ชันเหล่านี้มาเผื่อ script.js เรียกใช้
+        import { addDoc, getDoc, updateDoc, doc, onSnapshot, orderBy, limit } from "./firebase-config.js";
+        window.dbFunctions = { collection, addDoc, getDoc, getDocs, updateDoc, doc, query, where, onSnapshot, orderBy, limit };
 
-        // โหลดรายชื่อรายการแข่งมาใส่ Dropdown
         async function loadCampaigns() {
             const select = document.getElementById('campaignSelectSetup');
             try {
@@ -82,7 +71,6 @@
             }
         }
 
-        // ฟังก์ชันดึงชื่อคนที่ "อนุมัติแล้ว"
         document.getElementById('fetchBtn').addEventListener('click', async () => {
             const cid = document.getElementById('campaignSelectSetup').value;
             const btn = document.getElementById('fetchBtn');
@@ -96,25 +84,32 @@
                 let players = [];
                 snapshot.forEach(doc => { players.push(doc.data().playerName); });
 
-                if (players.length < 2) {
-                    alert(`ต้องการผู้อนุมัติอย่างน้อย 2 คน (ตอนนี้มี ${players.length} คน) กรุณาไปอนุมัติในหน้า Dashboard ก่อนครับ`);
+                if (players.length === 0) {
+                    alert(`ยังไม่มีผู้อนุมัติในรายการนี้ กรุณาไปอนุมัติในหน้า Dashboard ก่อนครับ`);
                     btn.innerText = "ดึงรายชื่อ";
                     return;
                 }
 
-                // 1. ตั้งค่าจำนวนคนแข่งให้เท่ากับคนที่ดึงมาได้
-                document.getElementById('playerCount').value = players.length;
+                // 🌟 ลอจิกใหม่: อ่านค่าจำนวนช่องที่แอดมินตั้งไว้ 🌟
+                let targetCount = parseInt(document.getElementById('playerCount').value) || 32;
                 
-                // 2. สั่งให้วาดกล่อง input
+                // ถ้าระบบเจอว่าคนสมัครเยอะกว่าช่องที่เตรียมไว้ จะขยายช่องให้อัตโนมัติ
+                if (players.length > targetCount) {
+                    targetCount = players.length;
+                    document.getElementById('playerCount').value = targetCount;
+                }
+
+                // 1. วาดกล่องเปล่าๆ ตามจำนวนช่องที่ตั้งไว้ (เช่น ตั้งไว้ 32 ก็วาด 32 กล่อง)
                 window.generateInputFields();
 
-                // 3. หยอดชื่อที่ดึงมาใส่ลงไปในกล่องแต่ละใบ
+                // 2. หยอดชื่อที่ดึงมาลงไปในกล่อง (กล่องที่เหลือจะกลายเป็นกล่องว่าง)
                 const inputs = document.querySelectorAll('.playerName');
                 players.forEach((name, index) => {
                     if(inputs[index]) inputs[index].value = name;
                 });
 
-                alert(`✅ ดึงรายชื่อสำเร็จ ${players.length} คน! ตรวจสอบความถูกต้องและกด "สร้างสายการแข่งขัน" ด้านล่างได้เลยครับ`);
+                // แจ้งเตือนแอดมินให้เข้าใจตรงกัน
+                alert(`✅ ดึงรายชื่อสำเร็จ ${players.length} คน!\n(มีช่องว่างเหลือเผื่อผู้สมัครหน้างาน ${targetCount - players.length} ช่อง)\n\n💡 คุณสามารถพิมพ์ชื่อเพิ่มในช่องว่างได้เลย หากปล่อยว่างไว้ระบบจะจัดคู่ให้เป็น "ได้บาย (BYE)" อัตโนมัติเมื่อกดสุ่มครับ`);
                 btn.innerText = "ดึงรายชื่อ";
 
             } catch (e) {
@@ -123,7 +118,6 @@
             }
         });
 
-        // รันฟังก์ชันทันทีที่เปิดหน้า
         window.onload = loadCampaigns;
     </script>
     <script src="script.js"></script>
