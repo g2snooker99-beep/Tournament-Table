@@ -3,7 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
-    <title>G2 LIVE | Grand Final Mode</title>
+    <title>G2 LIVE | TV Broadcast</title>
+    <style>
+        /* 🎛️ สไตล์ของแถบรีโมทควบคุม (ซ่อนตัวเมื่อไม่ใช้งาน) */
+        #liveControls {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(10, 10, 15, 0.95); padding: 15px 25px; border-radius: 50px;
+            display: flex; gap: 15px; border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            z-index: 1000; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0.05; /* โปร่งใส 95% ตอนปกติจะได้ไม่กวนสายตาคนดู */
+        }
+        
+        /* เอาเมาส์ไปชี้ที่ขอบล่าง จอรีโมทจะเด้งขึ้นมา */
+        #liveControls:hover { opacity: 1; bottom: 35px; }
+        
+        .ctrl-btn {
+            padding: 10px 25px; border-radius: 30px; border: none; cursor: pointer;
+            font-weight: 800; font-family: 'Kanit', sans-serif; font-size: 1.1em;
+            background: #2a2a35; color: #fff; transition: 0.2s;
+        }
+        .ctrl-btn:hover { background: #444; transform: scale(1.05); }
+        .ctrl-btn.active { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent-glow); }
+        .ctrl-btn.final-btn.active { background: var(--gold); color: #000; box-shadow: 0 0 15px var(--gold-glow); }
+        .auto-btn { background: #28a745; color: white; }
+        .auto-btn.paused { background: #dc3545; color: white; }
+    </style>
 </head>
 <body>
     <div class="live-container">
@@ -12,12 +37,69 @@
         </div>
     </div>
 
+    <div id="liveControls"></div>
+
     <script type="module">
-        import { db, doc, onSnapshot } from "./firebase-config.js?v=8";
+        import { db, doc, onSnapshot } from "./firebase-config.js?v=10";
         const urlParams = new URLSearchParams(window.location.search);
         const tourneyId = urlParams.get('id');
+
+        let zonesSequence = [0];
         let zoneIdx = 0;
-        let zonesSequence = [0, 1, 2, 3]; // เริ่มต้นด้วยโซนปกติ
+        let isAutoPlay = true;
+        let slideTimer = null;
+
+        // 🎛️ ฟังก์ชันวาดปุ่มกดลงบนรีโมท
+        function renderControls() {
+            const ctrl = document.getElementById('liveControls');
+            ctrl.innerHTML = '';
+
+            // 1. ปุ่มหมุนออโต้ / หยุด
+            const autoBtn = document.createElement('button');
+            autoBtn.innerHTML = isAutoPlay ? "⏸️ สั่งหยุดหมุน (แช่จอ)" : "▶️ สั่งหมุนออโต้";
+            autoBtn.className = `ctrl-btn auto-btn ${!isAutoPlay ? 'paused' : ''}`;
+            autoBtn.onclick = () => {
+                isAutoPlay = !isAutoPlay;
+                if (isAutoPlay) startAutoPlay();
+                else clearInterval(slideTimer);
+                renderControls(); // รีเฟรชปุ่ม
+            };
+            ctrl.appendChild(autoBtn);
+
+            // 2. ปุ่มเลือกโซนแบบ Manual (A, B, C, D, Grand Final)
+            zonesSequence.forEach((z, index) => {
+                const btn = document.createElement('button');
+                const isFinal = z === 99;
+                btn.innerText = isFinal ? "🏆 GRAND FINAL" : `ZONE ${String.fromCharCode(65 + z)}`;
+                
+                let activeClass = '';
+                // ไฮไลท์ปุ่มถ้าหน้าจอนั้นถูกล็อคค้างไว้
+                if (index === zoneIdx && !isAutoPlay) {
+                    activeClass = isFinal ? 'active final-btn' : 'active';
+                }
+
+                btn.className = `ctrl-btn ${activeClass}`;
+                btn.onclick = () => {
+                    isAutoPlay = false; // ปิดระบบหมุนออโต้ทันทีที่แอดมินจิ้มเลือกจอเอง
+                    clearInterval(slideTimer);
+                    zoneIdx = index;
+                    window.initBracket(window.currentPlayers, window.currentMatches, z);
+                    renderControls();
+                };
+                ctrl.appendChild(btn);
+            });
+        }
+
+        // 🔄 ฟังก์ชันสลับหน้าจออัตโนมัติ
+        function startAutoPlay() {
+            clearInterval(slideTimer);
+            slideTimer = setInterval(() => {
+                if (!isAutoPlay || zonesSequence.length <= 1) return;
+                zoneIdx = (zoneIdx + 1) % zonesSequence.length;
+                const activeZone = zonesSequence[zoneIdx];
+                window.initBracket(window.currentPlayers, window.currentMatches, activeZone);
+            }, 15000); // สลับทุกๆ 15 วินาที
+        }
 
         if (tourneyId) {
             onSnapshot(doc(db, "tournaments", tourneyId), (docSnap) => {
@@ -29,27 +111,27 @@
                     const totalZones = Math.ceil(window.currentPlayers.length / 32);
                     zonesSequence = Array.from({length: totalZones}, (_, i) => i);
                     
-                    // ✨ ถ้าเริ่มมีผลแชมป์โซน ให้เพิ่มรอบ Grand Final (99) เข้าไปในคิวการสลับหน้าจอ
+                    // ถ้าระบบมีผู้ชนะโซนแล้ว ให้แทรก Grand Final (99) เข้าไปในคิวจอ
                     if (Object.keys(window.currentMatches).some(key => key.startsWith('winner-zone-'))) {
-                        zonesSequence.push(99);
+                        if (!zonesSequence.includes(99)) zonesSequence.push(99);
                     }
 
-                    const switchZone = () => {
-                        const activeZone = zonesSequence[zoneIdx];
-                        window.initBracket(window.currentPlayers, window.currentMatches, activeZone);
-                        zoneIdx = (zoneIdx + 1) % zonesSequence.length;
-                    };
+                    if (zoneIdx >= zonesSequence.length) zoneIdx = 0;
+
+                    renderControls();
 
                     if (!window.initialRender) {
-                        switchZone();
+                        window.initBracket(window.currentPlayers, window.currentMatches, zonesSequence[zoneIdx]);
+                        if (isAutoPlay) startAutoPlay();
                         window.initialRender = true;
-                        if (window.slideTimer) clearInterval(window.slideTimer);
-                        window.slideTimer = setInterval(switchZone, 15000); 
+                    } else {
+                        // อัปเดตข้อมูลสดๆ โดยไม่เปลี่ยนหน้าจอที่ล็อคไว้
+                        window.initBracket(window.currentPlayers, window.currentMatches, zonesSequence[zoneIdx]);
                     }
                 }
             });
         }
     </script>
-    <script src="script.js?v=8"></script>
+    <script src="script.js?v=10"></script>
 </body>
 </html>
