@@ -122,26 +122,33 @@ function createZoneRound(r, count, prefix, players, offset) {
 function createSlot(r, mKey, pIdx, players, offset) {
     const slot = document.createElement('div'); slot.className = 'player-slot';
     let name = "รอผล";
+    let prevKeyToClear = null; // 🔑 ตัวแปรใหม่สำหรับดึง Key ของรอบที่แล้วมาลบ
+    
     if (r === 0) {
         const mIdx = parseInt(mKey.split('-M')[1]); name = players[offset + (mIdx * 2) + pIdx]?.name || "BYE";
     } else {
-        const parts = mKey.split('-R'); name = window.currentMatches[`match-${parts[0]}-R${r-1}-M${parseInt(parts[1].split('-M')[1])*2 + pIdx}`] || "รอผล";
+        const parts = mKey.split('-R'); 
+        const prevMatchIdx = parseInt(parts[1].split('-M')[1]) * 2 + pIdx;
+        prevKeyToClear = `${parts[0]}-R${r-1}-M${prevMatchIdx}`;
+        name = window.currentMatches[`match-${prevKeyToClear}`] || "รอผล";
     }
     const isWaiting = name === "รอผล" || name === "BYE";
     if (isWaiting) slot.classList.add('waiting');
 
     slot.innerHTML = `<span class="slot-name">${name}</span>`;
 
-    // 🎯 สร้างปุ่มกากบาท (X)
     if (isAdmin() && !isWaiting) {
         const delBtn = document.createElement('span'); delBtn.className = 'delete-btn'; delBtn.innerHTML = '✖'; delBtn.title = "ลบชื่อ / ยกเลิกผล";
         delBtn.onclick = (e) => {
-            e.stopPropagation(); // กันไม่ให้ไปทริกเกอร์การกดเลือกผู้ชนะ
+            e.stopPropagation();
             if(confirm(`ต้องการยกเลิกผลของ "${name}" ใช่หรือไม่?`)) {
                 if (r === 0) {
-                    window.currentPlayers[(window.currentZoneIdx * 32) + offset + (parseInt(mKey.split('-M')[1]) * 2) + pIdx] = { name: "BYE" };
+                    // ถ้ารอบแรก ลบที่ players array ตรงๆ
+                    const mIdx = parseInt(mKey.split('-M')[1]);
+                    window.currentPlayers[(window.currentZoneIdx * 32) + offset + (mIdx * 2) + pIdx] = { name: "BYE" };
                 } else {
-                    delete window.currentMatches[`match-${mKey}`];
+                    // 💥 ถ้ารอบ 2 ขึ้นไป ให้ลบจาก Key ของ "รอบก่อนหน้า" 💥
+                    delete window.currentMatches[`match-${prevKeyToClear}`];
                 }
                 window.initBracket(window.currentPlayers, window.currentMatches, window.currentZoneIdx || 0);
             }
@@ -160,9 +167,11 @@ function createSlot(r, mKey, pIdx, players, offset) {
             if (newName !== null) {
                 const upName = newName.trim();
                 if (r === 0) {
-                    window.currentPlayers[(window.currentZoneIdx * 32) + offset + (parseInt(mKey.split('-M')[1]) * 2) + pIdx] = { name: upName === "" ? "BYE" : upName };
+                    const mIdx = parseInt(mKey.split('-M')[1]);
+                    window.currentPlayers[(window.currentZoneIdx * 32) + offset + (mIdx * 2) + pIdx] = { name: upName === "" ? "BYE" : upName };
                 } else {
-                    if (upName !== "") window.currentMatches[`match-${mKey}`] = upName;
+                    if (upName !== "") window.currentMatches[`match-${prevKeyToClear}`] = upName;
+                    else delete window.currentMatches[`match-${prevKeyToClear}`];
                 }
                 window.initBracket(window.currentPlayers, window.currentMatches, window.currentZoneIdx || 0);
             }
@@ -185,7 +194,6 @@ function createFinalSlot(idx, zoneLetter) {
     const name = window.currentMatches[`winner-zone-${idx}`] || `รอแชมป์ ${zoneLetter}`;
     const isWaiting = !window.currentMatches[`winner-zone-${idx}`];
     let html = `<span class="slot-name">${name}</span>`;
-    
     if (isAdmin() && !isWaiting) {
         html += `<span class="delete-btn" onclick="event.stopPropagation(); if(confirm('ยกเลิกการดึงตัวแชมป์โซน ${zoneLetter} ใช่หรือไม่?')){ delete window.currentMatches['winner-sf-${idx < 2 ? 1 : 2}']; window.initBracket(window.currentPlayers, window.currentMatches, 99); }">✖</span>`;
     }
@@ -196,13 +204,10 @@ function createFinalWinnerSlot(id1, id2) {
     const s1 = window.currentMatches[`winner-${id1}`]; const s2 = window.currentMatches[`winner-${id2}`];
     const html1 = s1 ? `<span class="slot-name">${s1}</span><span class="delete-btn" onclick="event.stopPropagation(); if(confirm('ยกเลิกผลคู่นี้?')){ delete window.currentMatches['winner-${id1}']; window.initBracket(window.currentPlayers, window.currentMatches, 99); }">✖</span>` : `<span class="slot-name">รอคู่ชิง 1</span>`;
     const html2 = s2 ? `<span class="slot-name">${s2}</span><span class="delete-btn" onclick="event.stopPropagation(); if(confirm('ยกเลิกผลคู่นี้?')){ delete window.currentMatches['winner-${id2}']; window.initBracket(window.currentPlayers, window.currentMatches, 99); }">✖</span>` : `<span class="slot-name">รอคู่ชิง 2</span>`;
-    return `
-        <div class="player-slot ${!s1?'waiting':''}" onclick="if(isAdmin() && '${s1||""}') selectGrandChamp('${s1}')">${html1}</div>
-        <div class="player-slot ${!s2?'waiting':''}" onclick="if(isAdmin() && '${s2||""}') selectGrandChamp('${s2}')">${html2}</div>
-    `;
+    return `<div class="player-slot ${!s1?'waiting':''}" onclick="if(isAdmin() && '${s1||""}') selectGrandChamp('${s1}')">${html1}</div><div class="player-slot ${!s2?'waiting':''}" onclick="if(isAdmin() && '${s2||""}') selectGrandChamp('${s2}')">${html2}</div>`;
 }
 
-window.resetTournamentData = async () => { /* (ฟังก์ชันล้างข้อมูลเดิม เก็บไว้ปกติ) */ };
+window.resetTournamentData = async () => { /* (คงฟังก์ชันล้างข้อมูลไว้) */ };
 window.saveAndGoToBracket = async () => {
     const btn = document.getElementById('saveBtn'); if(btn) btn.innerText = "⏳ บันทึก...";
     const players = Array.from(document.querySelectorAll('.playerName')).map(i => ({ name: i.value.trim() }));
