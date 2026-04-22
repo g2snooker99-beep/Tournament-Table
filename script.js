@@ -1,7 +1,6 @@
-let tournamentData = {
-    left: [],
-    right: []
-};
+let tournamentData = { left: [], right: [] };
+let finalists = { left: null, right: null };
+let grandChampion = null;
 
 function generateInputFields() {
     let count = parseInt(document.getElementById('playerCount').value);
@@ -27,27 +26,35 @@ function shuffleArray(array) {
     }
 }
 
-// ฟังก์ชันหลักในการสร้างผัง
 function generateBracket() {
     let players = Array.from(document.querySelectorAll('.playerName')).map(i => i.value.trim()).filter(v => v !== "");
     if (players.length < 2) return alert("ต้องมีผู้แข่งอย่างน้อย 2 คน");
     shuffleArray(players);
 
+    finalists = { left: null, right: null };
+    grandChampion = null;
+    
     let mid = Math.ceil(players.length / 2);
-    tournamentData.left = [players.slice(0, mid)]; // รอบแรกฝั่งซ้าย
-    tournamentData.right = [players.slice(mid)];   // รอบแรกฝั่งขวา
+    tournamentData.left = [players.slice(0, mid)];
+    tournamentData.right = [players.slice(mid)];
 
     renderBracket();
 }
 
-// ฟังก์ชันวาดผังใหม่ทุกครั้งที่มีการเปลี่ยนผู้ชนะ
 function renderBracket() {
     let resultDiv = document.getElementById('result');
-    resultDiv.innerHTML = `<div class="bracket-visual">
+    resultDiv.innerHTML = `
+    <div class="bracket-visual">
         <div class="side left-side" id="leftSide"></div>
         <div class="champion-area">
-            <div class="champion-title">🏆 CHAMPION</div>
-            <div id="finalWinner" class="champion-box">รอผลชิงชนะเลิศ</div>
+            <div class="champion-title">🏆 GRAND CHAMPION</div>
+            <div id="grandChampionDisplay" class="grand-champion-name">${grandChampion || "???"}</div>
+            <div class="final-matchup">
+                <div class="round-title">ชิงชนะเลิศ</div>
+                <div class="player-slot" onclick="setGrandChampion('${finalists.left}')">${finalists.left || "รอผลฝั่งซ้าย"}</div>
+                <div style="text-align:center; margin:5px; font-weight:bold; color:#ff4757;">VS</div>
+                <div class="player-slot" onclick="setGrandChampion('${finalists.right}')">${finalists.right || "รอผลฝั่งขวา"}</div>
+            </div>
         </div>
         <div class="side right-side" id="rightSide"></div>
     </div>`;
@@ -62,7 +69,7 @@ function renderBracket() {
 function renderSide(rounds, containerId, sideName) {
     let container = document.getElementById(containerId);
     rounds.forEach((roundPlayers, roundIndex) => {
-        let roundHTML = `<div class="round"><div class="round-title">รอบที่ ${roundIndex + 1}</div>`;
+        let roundHTML = `<div class="round"><div class="round-title">Round ${roundIndex + 1}</div>`;
         for (let i = 0; i < roundPlayers.length; i += 2) {
             let p1 = roundPlayers[i] || "<i>TBD</i>";
             let p2 = roundPlayers[i+1] || (roundIndex === 0 ? "<i>BYE</i>" : "<i>TBD</i>");
@@ -78,37 +85,33 @@ function renderSide(rounds, containerId, sideName) {
     });
 }
 
-// ฟังก์ชันหัวใจ: คลิกที่ชื่อคนชนะ เพื่อให้คนนั้นไปโผล่ในรอบถัดไป
 function advancePlayer(side, roundIndex, name, matchIndex) {
-    if (name === "<i>TBD</i>" || name === "<i>BYE</i>") return;
+    if (name === "<i>TBD</i>" || name === "<i>BYE</i>" || name === "") return;
 
-    // เตรียมพื้นที่สำหรับรอบถัดไปถ้ายังไม่มี
-    if (!tournamentData[side][roundIndex + 1]) {
-        tournamentData[side][roundIndex + 1] = [];
-    }
-
-    // ใส่ชื่อผู้ชนะลงใน match ถัดไปของรอบถัดไป
-    tournamentData[side][roundIndex + 1][matchIndex] = name;
-
-    // ถ้าชนะในรอบสุดท้ายของฝั่งตัวเองแล้ว ให้ส่งไปที่ Champion Box
-    // สมมติว่ามี 4 รอบ (ขึ้นอยู่กับจำนวนคน)
-    // สำหรับการทดสอบเบื้องต้น ถ้าไม่มีคนชนะคู่กันในรอบนั้นแล้ว ให้ถือเป็นผู้เข้าชิง
-    checkFinalist();
+    let currentRoundPlayers = tournamentData[side][roundIndex];
     
-    renderBracket(); // วาดใหม่เพื่อโชว์ผล
+    // ถ้าเป็นแมตช์สุดท้ายของฝั่งนี้ (เหลือ 1 คู่ในรอบนี้)
+    if (currentRoundPlayers.length <= 2) {
+        finalists[side] = name;
+    } else {
+        if (!tournamentData[side][roundIndex + 1]) tournamentData[side][roundIndex + 1] = [];
+        tournamentData[side][roundIndex + 1][matchIndex] = name;
+    }
+    renderBracket();
 }
 
-function checkFinalist() {
-    // ระบบจะเช็คว่าใครคือคนสุดท้ายของแต่ละฝั่ง
-    // ฟังก์ชันนี้สามารถพัฒนาต่อให้เช็คการเจอกันตรงกลางได้
+function setGrandChampion(name) {
+    if (!name || name.includes("รอผล")) return;
+    grandChampion = name;
+    renderBracket();
+    alert("🎊 ขอแสดงความยินดีกับแชมป์เปี้ยน: " + name);
 }
 
 async function saveToFirebase() {
     try {
         const docRef = await window.dbFunctions.addDoc(window.dbFunctions.collection(window.db, "tournaments"), {
-            bracket: tournamentData,
-            createdAt: new Date().toISOString()
+            finalists, grandChampion, tournamentData, createdAt: new Date().toISOString()
         });
-        alert("✅ บันทึกสายการแข่งขันปัจจุบันเรียบร้อย!");
+        alert("✅ บันทึกประวัติการแข่งลง Firebase เรียบร้อย!");
     } catch (e) { alert("❌ บันทึกไม่สำเร็จ: " + e.message); }
 }

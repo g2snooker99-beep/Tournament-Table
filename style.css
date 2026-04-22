@@ -63,3 +63,32 @@ h2 { color: #00d4ff; text-align: center; text-transform: uppercase; }
     border-color: #00d4ff;
     transform: scale(1.02);
 }
+/* กล่องแมตช์ชิงชนะเลิศตรงกลาง */
+.final-matchup {
+    margin-top: 20px;
+    padding: 15px;
+    background: #333;
+    border: 2px solid #00d4ff;
+    border-radius: 10px;
+    width: 220px;
+}
+.final-matchup .player-slot {
+    font-size: 1.1em;
+    padding: 10px;
+    text-align: center;
+    color: #fff;
+    background: #444;
+    margin: 5px 0;
+    border-radius: 5px;
+}
+.final-matchup .player-slot:hover {
+    background: #00d4ff;
+    color: #000;
+}
+.grand-champion-name {
+    font-size: 1.8em;
+    color: #ffcc00;
+    text-shadow: 0 0 15px rgba(255, 204, 0, 0.6);
+    font-weight: bold;
+    margin-top: 10px;
+}
