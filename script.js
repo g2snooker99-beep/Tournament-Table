@@ -31,11 +31,10 @@ window.initBracket = (players, matches = {}, zoneIdx = 0) => {
     const rightSide = document.createElement('div');
     rightSide.className = 'side right-side';
 
-    // วาด 3 รอบในโซน (8, 4, 2 แมตช์ต่อฝั่ง)
     for (let r = 0; r < 3; r++) {
-        const matchesInRound = 8 / Math.pow(2, r); // 8, 4, 2 แมตช์ต่อฝั่ง
+        const matchesInRound = 8 / Math.pow(2, r);
         leftSide.appendChild(createZoneRound(r, matchesInRound, `L-Z${zoneIdx}`, zonePlayers, 0));
-        rightSide.prepend(createZoneRound(r, matchesInRound, `R-Z${zoneIdx}`, zonePlayers, 16)); // 🎉 แก้จุดนี้: ใส่ Offset 16 ให้ฝั่งขวา 🎉
+        rightSide.appendChild(createZoneRound(r, matchesInRound, `R-Z${zoneIdx}`, zonePlayers, 16));
     }
 
     const zoneWinnerKey = `winner-zone-${zoneIdx}`;
@@ -60,9 +59,8 @@ function createZoneRound(r, matchCount, sidePrefix, zonePlayers, sideOffset) {
         const mKey = `${sidePrefix}-R${r}-M${i}`;
         const matchDiv = document.createElement('div');
         matchDiv.className = 'matchup';
-        matchDiv.id = mKey; // ใส่ ID เพื่อใช้ค้นหาตอนคลิกเลือกแชมป์โซน
+        matchDiv.id = mKey;
         
-        // ส่ง sideOffset ไปให้ createSlot คำนวณตำแหน่งช่องรอบแรกให้ถูกต้อง
         matchDiv.appendChild(createSlot(r, mKey, 0, zonePlayers, sideOffset));
         matchDiv.appendChild(createSlot(r, mKey, 1, zonePlayers, sideOffset));
         round.appendChild(matchDiv);
@@ -76,13 +74,11 @@ function createSlot(r, mKey, pIdx, zonePlayers, sideOffset) {
     let name = "รอผล";
     
     if (r === 0) {
-        // รอบแรก ดึงชื่อตรงๆ จาก 32 คนของโซน
         const matchIdx = parseInt(mKey.split('-M')[1]);
         const playerIdxInSide = (matchIdx * 2) + pIdx;
-        const playerIdxInZone = sideOffset + playerIdxInSide; // 🎉 แก้จุดนี้: คำนวณ Index รอบแรกให้ถูกต้อง 🎉
+        const playerIdxInZone = sideOffset + playerIdxInSide;
         name = zonePlayers[playerIdxInZone]?.name || "BYE";
     } else {
-        // รอบต่อมา ดึงจากผู้ชนะแมตช์ก่อนหน้า
         const parts = mKey.split('-R');
         const prevMatchIdx = parseInt(parts[1].split('-M')[1]) * 2 + pIdx;
         const prevKey = `${parts[0]}-R${r-1}-M${prevMatchIdx}`;
@@ -92,18 +88,69 @@ function createSlot(r, mKey, pIdx, zonePlayers, sideOffset) {
     slot.innerText = name;
     if (name === "รอผล" || name === "BYE") slot.classList.add('waiting');
     
-    // คลิกเลือกผู้ชนะ (เฉพาะแอดมิน)
     if (window.location.pathname.includes('bracket.html') && !slot.classList.contains('waiting')) {
         slot.onclick = () => {
             window.currentMatches[`match-${mKey}`] = name;
-            // ถ้าเป็นแมตช์ชิงแชมป์โซน (Round 2) ให้ส่งชื่อเข้า Champion Area
             if (r === 2) {
                 const zoneIdx = mKey.split('-Z')[1].split('-')[0];
                 window.currentMatches[`winner-zone-${zoneIdx}`] = name;
             }
-            // วาดตารางใหม่เพื่ออัปเดตสาย
             window.initBracket(window.currentPlayers, window.currentMatches, window.currentZoneIdx || 0);
         };
     }
     return slot;
 }
+
+// 🎯 ฟังก์ชันบันทึกที่หายไป กลับมาแล้วครับ! 🎯
+window.saveAndGoToBracket = async () => {
+    const saveBtn = document.getElementById('saveBtn');
+    if(saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerText = "⏳ กำลังบันทึกข้อมูล...";
+    }
+
+    const playerInputs = document.querySelectorAll('.playerName');
+    const players = Array.from(playerInputs).map(input => ({ name: input.value.trim() }));
+    const campaignSelect = document.getElementById('campaignSelectSetup');
+    const campaignId = campaignSelect ? campaignSelect.value : "manual";
+
+    try {
+        const { db, collection, addDoc, query, where, getDocs, updateDoc, doc } = window.dbFunctions;
+        
+        const q = query(collection(db, "tournaments"), where("campaignId", "==", campaignId));
+        const snap = await getDocs(q);
+        
+        let docId;
+        if (!snap.empty) {
+            docId = snap.docs[0].id;
+            await updateDoc(doc(db, "tournaments", docId), { players, updatedAt: new Date() });
+        } else {
+            const docRef = await addDoc(collection(db, "tournaments"), { 
+                players, 
+                campaignId, 
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                matches: {} 
+            });
+            docId = docRef.id;
+        }
+
+        const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+        const adminUrlEl = document.getElementById('adminUrl');
+        const liveUrlEl = document.getElementById('liveUrl');
+        const linkArea = document.getElementById('linkDisplayArea');
+        
+        if(adminUrlEl) adminUrlEl.innerText = `${baseUrl}bracket.html?id=${docId}`;
+        if(liveUrlEl) liveUrlEl.innerText = `${baseUrl}live.html?id=${docId}`;
+        if(linkArea) linkArea.style.display = 'block';
+        
+        alert("✅ บันทึกและอัปเดตสายการแข่งขันเรียบร้อย!");
+    } catch (e) {
+        alert("❌ บันทึกไม่สำเร็จ: " + e.message);
+    } finally {
+        if(saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerText = "💾 บันทึกและอัปเดตสายการแข่งขัน";
+        }
+    }
+};
