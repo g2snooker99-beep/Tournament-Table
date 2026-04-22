@@ -3,45 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tournament-Table | Entry</title>
+    <title>Tournament-Table | สร้างรายการจัดแข่ง</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h2>🏆 Tournament-Table</h2>
-        <p style="text-align:center;">ระบบจัดการสายการแข่งขันอัตโนมัติ</p>
+    <div class="container" style="max-width: 800px;">
         
-        <div id="setupArea">
-            <div class="input-group">
-                <input type="number" id="playerCount" value="16" min="2">
-                <button class="btn-confirm" onclick="generateInputFields()">ยืนยันจำนวนผู้แข่ง</button>
-            </div>
-
-            <div id="playerInputs" style="display: none;">
-                <div id="autoFillArea" style="text-align:center; margin-bottom:15px;"></div>
-                <div id="nameFields"></div>
-                <button class="btn-generate" onclick="saveAndGoToBracket()" id="saveBtn">💾 สร้างและบันทึกสายการแข่งขัน</button>
-            </div>
+        <div id="landingView" class="hero-section">
+            <h1 style="font-size: 3em; color: #fff; margin-bottom: 10px;">🏆 TOURNAMENT-TABLE</h1>
+            <p style="color: #aaa; margin-bottom: 40px; font-size: 1.2em;">ระบบบริหารจัดการสายการแข่งขันระดับมืออาชีพ</p>
+            <button class="btn-huge" onclick="showForm()">+ สร้างรายการจัดแข่ง</button>
         </div>
 
-        <div id="linkDisplayArea" style="display:none;" class="link-box">
-            <h3 style="color:#00d4ff; margin-top:0;">✅ สร้างทัวร์นาเมนต์สำเร็จ</h3>
-            <p>🔗 <b>Admin Link (สำหรับจัดการผล):</b></p>
-            <span id="adminUrl" class="url-text"></span>
-            
-            <p>📺 <b>Live Link (สำหรับแสดงผล):</b></p>
-            <span id="liveUrl" class="url-text"></span>
-            
-            <div style="display:flex; gap:10px; margin-top:15px;">
-                <button onclick="window.location.reload()" style="background:#444;">สร้างใหม่</button>
-                <button id="goToAdminBtn" class="btn-confirm">ไปหน้าแอดมิน ➔</button>
+        <div id="formView" class="form-container" style="display: none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                <h2 style="margin:0; color:#fff;">📝 รายละเอียดรายการแข่งขัน</h2>
+                <button onclick="hideForm()" style="background:#444; padding:5px 10px;">✖ ยกเลิก</button>
             </div>
+            
+            <form id="campaignForm">
+                <div class="form-group">
+                    <label>ชื่อรายการแข่งขัน *</label>
+                    <input type="text" id="tourneyName" placeholder="เช่น G2 Snooker Championship 2026" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>รูปภาพแบนเนอร์รายการ (ถ้ามี)</label>
+                    <input type="file" id="tourneyImage" accept="image/*">
+                </div>
+                
+                <div class="form-group">
+                    <label>กติกาของรายการแข่งขัน *</label>
+                    <textarea id="tourneyRules" placeholder="ระบุกติกา เช่น แข่งระบบ 3 ใน 5 เฟรม, แพ้คัดออก..." required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>ราคาค่าสมัคร (บาท) *</label>
+                    <input type="number" id="entryFee" placeholder="เช่น 500" required min="0">
+                </div>
+                
+                <div class="form-group">
+                    <label>รูปแบบเสื้อแข่งขัน (ถ้ามี)</label>
+                    <input type="file" id="jerseyImage" accept="image/*">
+                    <small style="color:#888;">* อัปโหลดแบบเสื้อเพื่อให้นักกีฬาดูเป็นตัวอย่าง</small>
+                </div>
+                
+                <button type="submit" class="btn-confirm" style="width:100%; font-size:1.2em; margin-top:10px;" id="submitBtn">💾 บันทึกและเปิดรับสมัคร</button>
+            </form>
         </div>
+
+        <div id="successView" class="form-container" style="display: none; text-align:center;">
+            <h2 style="color:#00d4ff;">✅ สร้างรายการแข่งขันสำเร็จ!</h2>
+            <p>รายการของคุณพร้อมแล้ว ขั้นตอนต่อไปคือส่งลิงก์รับสมัครให้นักกีฬา</p>
+            
+            <div style="background:#222; padding:15px; border-radius:8px; margin:20px 0; border:1px dashed #555;">
+                <p style="margin:0; color:#aaa;">ลิงก์สำหรับรับสมัครนักกีฬา:</p>
+                <a id="registerLink" href="#" target="_blank" style="color:#00d4ff; font-size:1.2em; font-weight:bold; word-break: break-all;"></a>
+            </div>
+            
+            <button onclick="window.location.reload()" style="background:#444;">สร้างรายการอื่นเพิ่ม</button>
+            <button onclick="goToSetup()" class="btn-confirm" style="background:#f39c12;">ไปหน้าจัดสายแข่ง ➔</button>
+        </div>
+
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        
+        // *** อย่าลืมใส่ API KEY ของคุณตรงนี้ ***
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY", 
             authDomain: "tournament-table-45dca.firebaseapp.com",
@@ -51,9 +81,75 @@
             appId: "APP_ID"
         };
         const app = initializeApp(firebaseConfig);
-        window.db = getFirestore(app);
-        window.dbFunctions = { collection, addDoc };
+        const db = getFirestore(app);
+
+        // UI Controls
+        window.showForm = () => {
+            document.getElementById('landingView').style.display = 'none';
+            document.getElementById('formView').style.display = 'block';
+        };
+        window.hideForm = () => {
+            document.getElementById('formView').style.display = 'none';
+            document.getElementById('landingView').style.display = 'flex';
+        };
+        
+        // ตัวช่วยแปลงไฟล์รูปภาพเป็น Base64
+        const fileToBase64 = (file) => new Promise((resolve, reject) => {
+            if (!file) return resolve(null);
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+
+        // จัดการฟอร์ม
+        document.getElementById('campaignForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.innerText = "⏳ กำลังบันทึกแคมเปญ...";
+            btn.disabled = true;
+
+            try {
+                // ดึงรูปภาพ
+                const tourneyImgFile = document.getElementById('tourneyImage').files[0];
+                const jerseyImgFile = document.getElementById('jerseyImage').files[0];
+                
+                const bannerBase64 = await fileToBase64(tourneyImgFile);
+                const jerseyBase64 = await fileToBase64(jerseyImgFile);
+
+                // สร้าง Object ข้อมูล
+                const campaignData = {
+                    name: document.getElementById('tourneyName').value,
+                    rules: document.getElementById('tourneyRules').value,
+                    fee: document.getElementById('entryFee').value,
+                    bannerImg: bannerBase64,
+                    jerseyImg: jerseyBase64,
+                    status: "open", // สถานะเปิดรับสมัคร
+                    createdAt: new Date().toISOString()
+                };
+
+                // เซฟลง Firestore Collection ใหม่ชื่อ "campaigns"
+                const docRef = await addDoc(collection(db, "campaigns"), campaignData);
+                
+                // สลับหน้าโชว์ความสำเร็จ
+                document.getElementById('formView').style.display = 'none';
+                document.getElementById('successView').style.display = 'block';
+                
+                // เตรียมลิงก์สำหรับหน้า Register (ที่เราจะทำในสเต็ปต่อไป)
+                const baseUrl = window.location.href.split('index.html')[0];
+                document.getElementById('registerLink').innerText = `${baseUrl}register.html?campaign=${docRef.id}`;
+                document.getElementById('registerLink').href = `${baseUrl}register.html?campaign=${docRef.id}`;
+
+            } catch (error) {
+                alert("❌ บันทึกไม่สำเร็จ: " + error.message);
+                btn.innerText = "💾 บันทึกและเปิดรับสมัคร";
+                btn.disabled = false;
+            }
+        });
+
+        window.goToSetup = () => {
+            window.location.href = "setup.html";
+        }
     </script>
-    <script src="script.js?v=1776831892"></script>
 </body>
 </html>
