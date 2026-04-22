@@ -56,7 +56,7 @@ window.saveAndGoToBracket = async function() {
         btn.innerText = "⏳ กำลังบันทึกข้อมูล...";
         const docRef = await window.dbFunctions.addDoc(window.dbFunctions.collection(window.db, "tournaments"), initialData);
         
-        const baseUrl = window.location.href.split('index.html')[0];
+        const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
         const adminLink = `${baseUrl}bracket.html?id=${docRef.id}`;
         const liveLink = `${baseUrl}live.html`;
 
