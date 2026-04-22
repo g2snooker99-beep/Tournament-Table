@@ -92,3 +92,13 @@ h2 { color: #00d4ff; text-align: center; text-transform: uppercase; }
     font-weight: bold;
     margin-top: 10px;
 }
+/* สไตล์สำหรับช่องที่ยังไม่มีคนเข้ารอบ */
+.player-slot.waiting {
+    color: #666 !important;
+    font-style: italic;
+    cursor: default;
+}
+.player-slot.waiting:hover {
+    background: transparent !important;
+    color: #666 !important;
+}
