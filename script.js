@@ -3,7 +3,6 @@ window.generateInputFields = () => {
     const container = document.getElementById('nameFields');
     if (!container) return;
     
-    // โครงสร้างหน้าต่างกรอกแบบใหม่
     container.innerHTML = `
         <div style="display:flex; justify-content:space-between; margin-bottom:15px; align-items:center; background:rgba(0,0,0,0.3); padding:10px; border-radius:10px; border:1px dashed #555;">
             <span style="color:var(--accent); font-size:0.9em;">💡 <b>ทริค:</b> ก๊อปปี้รายชื่อจาก Excel มาวางรวดเดียวได้เลย</span>
@@ -15,12 +14,10 @@ window.generateInputFields = () => {
 
     const tabsArea = document.getElementById('tabsArea');
     const zonesArea = document.getElementById('zonesArea');
-
     const playersPerZone = 32;
     const totalZones = Math.ceil(count / playersPerZone);
 
     for(let z = 0; z < totalZones; z++) {
-        // สร้างปุ่ม Tab ถ้ามีคนเกิน 32 คน
         if(totalZones > 1) {
             const tab = document.createElement('div');
             tab.className = `setup-tab ${z === 0 ? 'active' : ''}`;
@@ -34,18 +31,15 @@ window.generateInputFields = () => {
             tabsArea.appendChild(tab);
         }
 
-        // สร้างพื้นที่กรอกของแต่ละ Zone
         const zoneContainer = document.createElement('div');
         zoneContainer.id = `zone-inputs-${z}`;
         zoneContainer.className = `zone-container ${z === 0 ? 'active' : ''}`;
-        
         const grid = document.createElement('div');
         grid.className = 'name-grid';
 
         const startNum = z * playersPerZone + 1;
         const endNum = Math.min((z + 1) * playersPerZone, count);
 
-        // สร้างช่องกรอกเรียงกันแบบ 4 คอลัมน์
         for (let i = startNum; i <= endNum; i++) {
             const div = document.createElement('div');
             div.className = 'form-group';
@@ -59,25 +53,37 @@ window.generateInputFields = () => {
         zoneContainer.appendChild(grid);
         zonesArea.appendChild(zoneContainer);
     }
-
     document.getElementById('playerInputs').style.display = 'block';
 };
 
-// ฟังก์ชันไม้ตาย: วางรายชื่อจาก Clipboard
 window.bulkPaste = () => {
     const text = prompt("ก๊อปปี้รายชื่อเรียงบรรทัดกัน แล้วนำมาวางที่นี่:");
     if(!text) return;
     const names = text.split('\n').map(n => n.trim()).filter(n => n !== "");
     const inputs = document.querySelectorAll('.playerName');
-    
     let filled = 0;
     for(let i=0; i<names.length; i++) {
-        if(inputs[i]) {
-            inputs[i].value = names[i];
-            filled++;
-        }
+        if(inputs[i]) { inputs[i].value = names[i]; filled++; }
     }
     alert(`✅ วางรายชื่อเรียบร้อย ${filled} คน`);
+};
+
+window.shuffleInputs = () => {
+    const inputs = Array.from(document.querySelectorAll('.playerName'));
+    const values = inputs.map(input => input.value);
+    for (let i = values.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [values[i], values[j]] = [values[j], values[i]];
+    }
+    inputs.forEach((input, index) => {
+        input.value = values[index];
+        if(input.value.trim() !== "") {
+            input.style.transition = "0.3s";
+            input.style.borderColor = "var(--accent)";
+            input.style.boxShadow = "0 0 10px var(--accent-glow)";
+            setTimeout(() => { input.style.borderColor = "transparent"; input.style.boxShadow = "none"; }, 800);
+        }
+    });
 };
 
 window.initBracket = (players, matches = {}, zoneIdx = 0) => {
@@ -89,8 +95,8 @@ window.initBracket = (players, matches = {}, zoneIdx = 0) => {
     const visual = document.createElement('div');
     visual.className = 'bracket-visual';
 
-    // 🚩 โหมดรอบชิงชนะเลิศ (ดึงแชมป์โซนมาชิงกัน)
     if (zoneIdx === 99) {
+        // รอบ GRAND FINAL
         visual.innerHTML = `
             <div class="side left-side">
                 <div class="round">
@@ -118,7 +124,7 @@ window.initBracket = (players, matches = {}, zoneIdx = 0) => {
             </div>
         `;
     } else {
-        // 🧩 โหมดแบ่งโซนปกติ (32 คน)
+        // รอบแบ่งโซนปกติ (ZONE A, B, C, D)
         const playersPerZone = 32;
         const startIdx = zoneIdx * playersPerZone;
         const zonePlayers = players.slice(startIdx, startIdx + playersPerZone);
@@ -128,29 +134,56 @@ window.initBracket = (players, matches = {}, zoneIdx = 0) => {
         const rightSide = document.createElement('div');
         rightSide.className = 'side right-side';
 
-        for (let r = 0; r < 3; r++) {
+        // 💥 แก้ตรงนี้: ขยายเป็น 4 รอบ (8 -> 4 -> 2 -> 1 แมตช์ต่อฝั่ง)
+        for (let r = 0; r < 4; r++) {
             const matchCount = 8 / Math.pow(2, r);
             leftSide.appendChild(createZoneRound(r, matchCount, `L-Z${zoneIdx}`, zonePlayers, 0));
             rightSide.appendChild(createZoneRound(r, matchCount, `R-Z${zoneIdx}`, zonePlayers, 16));
         }
 
         const zoneWinnerKey = `winner-zone-${zoneIdx}`;
+        const leftFinalistKey = `match-L-Z${zoneIdx}-R3-M0`; // คู่สุดท้ายฝั่งซ้าย
+        const rightFinalistKey = `match-R-Z${zoneIdx}-R3-M0`; // คู่สุดท้ายฝั่งขวา
+
         const champArea = document.createElement('div');
         champArea.className = 'champion-area';
+        // 💥 แก้ตรงนี้: เพิ่มกล่องแมตช์ชิงแชมป์โซนไว้ตรงกลาง ให้แอดมินจิ้มได้
         champArea.innerHTML = `
             <div class="zone-tag">ZONE ${String.fromCharCode(65 + zoneIdx)}</div>
-            <div style="color:var(--gold); font-size:1.1em; margin-bottom:10px;">ผู้ชนะประจำโซน</div>
+            <div style="color:var(--gold); font-size:1.1em; margin-bottom:10px;">🏆 ผู้ชนะประจำโซน 🏆</div>
             <div class="grand-champion-name" style="font-size:2.2em;">${window.currentMatches[zoneWinnerKey] || "รอผล"}</div>
+            
+            <div style="margin-top:30px; font-size:0.9em; color:#888;">แมตช์ชิงแชมป์โซน</div>
+            <div class="matchup" style="margin-top:10px; border-color:var(--accent);">
+                <div class="player-slot ${!window.currentMatches[leftFinalistKey] ? 'waiting' : ''}" 
+                     onclick="if(window.location.pathname.includes('bracket.html')) selectZoneChamp('${zoneIdx}', '${window.currentMatches[leftFinalistKey] || ""}')">
+                     ${window.currentMatches[leftFinalistKey] || "รอแชมป์ฝั่งซ้าย"}
+                </div>
+                <div class="player-slot ${!window.currentMatches[rightFinalistKey] ? 'waiting' : ''}" 
+                     onclick="if(window.location.pathname.includes('bracket.html')) selectZoneChamp('${zoneIdx}', '${window.currentMatches[rightFinalistKey] || ""}')">
+                     ${window.currentMatches[rightFinalistKey] || "รอแชมป์ฝั่งขวา"}
+                </div>
+            </div>
         `;
         visual.appendChild(leftSide);
         visual.appendChild(champArea);
         visual.appendChild(rightSide);
     }
-
     container.appendChild(visual);
 };
 
-// ฟังก์ชันสร้างช่องรอบชิง (ดึงจากแชมป์โซน)
+window.selectZoneChamp = (zoneIdx, name) => {
+    if (!name || name.indexOf('รอ') !== -1) return;
+    window.currentMatches[`winner-zone-${zoneIdx}`] = name;
+    window.initBracket(window.currentPlayers, window.currentMatches, window.currentZoneIdx);
+};
+
+window.selectGrandChamp = (name) => {
+    if (!name || name.indexOf('รอ') !== -1) return;
+    window.currentMatches['grand-champion'] = name;
+    window.initBracket(window.currentPlayers, window.currentMatches, 99);
+};
+
 function createFinalSlot(idx, zoneLetter) {
     const name = window.currentMatches[`winner-zone-${idx}`] || `รอแชมป์โซน ${zoneLetter}`;
     const slot = document.createElement('div');
@@ -168,18 +201,11 @@ function createFinalSlot(idx, zoneLetter) {
 function createFinalWinnerSlot(id1, id2) {
     const slot1 = window.currentMatches[`winner-${id1}`];
     const slot2 = window.currentMatches[`winner-${id2}`];
-    // สร้าง UI สำหรับให้แอดมินเลือกแชมป์โลก
     return `
-        <div class="player-slot ${!slot1 ? 'waiting' : ''}" onclick="selectGrandChamp('${slot1}')">${slot1 || "รอคู่ชิง 1"}</div>
-        <div class="player-slot ${!slot2 ? 'waiting' : ''}" onclick="selectGrandChamp('${slot2}')">${slot2 || "รอคู่ชิง 2"}</div>
+        <div class="player-slot ${!slot1 ? 'waiting' : ''}" onclick="if(window.location.pathname.includes('bracket.html')) selectGrandChamp('${slot1 || ""}')">${slot1 || "รอคู่ชิง 1"}</div>
+        <div class="player-slot ${!slot2 ? 'waiting' : ''}" onclick="if(window.location.pathname.includes('bracket.html')) selectGrandChamp('${slot2 || ""}')">${slot2 || "รอคู่ชิง 2"}</div>
     `;
 }
-
-window.selectGrandChamp = (name) => {
-    if (!name || name.indexOf('รอ') !== -1) return;
-    window.currentMatches['grand-champion'] = name;
-    window.initBracket(window.currentPlayers, window.currentMatches, 99);
-};
 
 function createZoneRound(r, matchCount, sidePrefix, zonePlayers, sideOffset) {
     const round = document.createElement('div');
@@ -212,13 +238,10 @@ function createSlot(r, mKey, pIdx, zonePlayers, sideOffset) {
     }
     slot.innerText = name;
     if (name === "รอผล" || name === "BYE") slot.classList.add('waiting');
+    
     if (window.location.pathname.includes('bracket.html') && !slot.classList.contains('waiting')) {
         slot.onclick = () => {
             window.currentMatches[`match-${mKey}`] = name;
-            if (r === 2) {
-                const zoneIdx = mKey.split('-Z')[1].split('-')[0];
-                window.currentMatches[`winner-zone-${zoneIdx}`] = name;
-            }
             window.initBracket(window.currentPlayers, window.currentMatches, window.currentZoneIdx || 0);
         };
     }
