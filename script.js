@@ -5,7 +5,7 @@ window.generateInputFields = () => {
     container.innerHTML = `
         <div style="display:flex; justify-content:space-between; margin-bottom:15px; align-items:center; background:rgba(0,0,0,0.3); padding:10px; border-radius:10px; border:1px dashed #555;">
             <span style="color:var(--accent); font-size:0.9em;">📋 ก๊อปปี้รายชื่อจาก Excel มาวางรวดเดียวได้เลย</span>
-            <button onclick="bulkPaste()" style="background:var(--status-success); color:white; padding:8px 20px; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">📋 วางรายชื่อ</button>
+            <div style="display:flex; gap:10px;"><button onclick="fillTestData()" style="background:linear-gradient(135deg, #f39c12 0%, #d68910 100%); color:#000; padding:8px 20px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; box-shadow:0 0 10px rgba(243,156,18,0.4);">🤖 เติมชื่อทดสอบ</button> <button onclick="bulkPaste()" style="background:var(--status-success); color:white; padding:8px 20px; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">📋 วางรายชื่อ</button></div>
         </div>
         <div id="tabsArea" class="setup-tabs"></div>
         <div id="zonesArea"></div>
@@ -71,7 +71,7 @@ window.initBracket = (players, matches = {}, zoneIdx = 0) => {
                 <div class="zone-tag" style="background:var(--gold)">GRAND FINAL</div>
                 <div style="color:var(--gold); font-size:1.2em; margin-bottom:10px;">🏆 THE CHAMPION 🏆</div>
                 <div class="grand-champion-name" style="font-size:3em; cursor:pointer;" title="ดับเบิลคลิกเพื่อลบแชมป์" ondblclick="if(isAdmin()) { delete window.currentMatches['grand-champion']; window.initBracket(window.currentPlayers, window.currentMatches, 99); }">${window.currentMatches['grand-champion'] || "???"}</div>
-                <div class="matchup" style="margin-top:20px; border-color:var(--gold);">${createFinalWinnerSlot("sf-1","sf-2")}</div>
+                <div class="matchup" style="margin-top:20px; border-color:var(--gold);">${createFinalWinnerSlot("sf1","sf2")}</div>
             </div>
             <div class="side right-side"><div class="round"><div class="matchup">${createFinalSlot(2,"C")}${createFinalSlot(3,"D")}</div></div></div>
         `;
@@ -259,4 +259,23 @@ window.resetTournamentData = async () => {
     } finally {
         if(btn) btn.innerText = "🗑️ ล้างผลการแข่งทั้งหมด (Reset)";
     }
+};
+
+// 🤖 ฟังก์ชันสำหรับเติมชื่อทดสอบอัตโนมัติ
+window.fillTestData = () => {
+    const inputs = document.querySelectorAll('.playerName');
+    if(inputs.length === 0) {
+        alert("กรุณาเลือกรายการและรอให้ตารางโหลดก่อนครับ");
+        return;
+    }
+    inputs.forEach((input, index) => {
+        input.value = `P-${index + 1}`; // ใส่ชื่อ P-1, P-2, ...
+        input.style.transition = "0.3s";
+        input.style.borderColor = "var(--gold)";
+        input.style.boxShadow = "0 0 10px var(--gold-glow)";
+        setTimeout(() => { 
+            input.style.borderColor = "transparent"; 
+            input.style.boxShadow = "none";
+        }, 800);
+    });
 };
