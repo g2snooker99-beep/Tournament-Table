@@ -219,3 +219,44 @@ window.saveAndGoToBracket = async () => {
     } catch (e) { alert("❌ " + e.message); }
     if(btn) btn.innerText = "💾 บันทึกสายการแข่งขัน";
 };
+
+// 🗑️ ฟังก์ชันรีเซ็ตผลการแข่งขันทั้งหมดของรายการนั้นๆ
+window.resetTournamentData = async () => {
+    const campaignId = document.getElementById('campaignSelectSetup')?.value;
+    if(!campaignId) { 
+        alert("กรุณาเลือกรายการแข่งขันก่อนครับ"); 
+        return; 
+    }
+
+    if(!confirm("⚠️ คำเตือนอันตราย!\n\nคุณแน่ใจหรือไม่ที่จะ 'ล้างผลการแข่งขันทั้งหมด' ของรายการนี้?\n(รายชื่อที่จัดไว้จะยังอยู่ แต่ผลแพ้-ชนะ และแชมป์จะหายไปทั้งหมด)")) {
+        return;
+    }
+
+    const btn = document.getElementById('resetTourneyBtn');
+    if(btn) btn.innerText = "⏳ กำลังล้างข้อมูล...";
+
+    try {
+        const { db, collection, query, where, getDocs, updateDoc, doc } = window.dbFunctions;
+        const q = query(collection(db, "tournaments"), where("campaignId", "==", campaignId));
+        const snap = await getDocs(q);
+
+        if (!snap.empty) {
+            const docId = snap.docs[0].id;
+            // 💥 สั่งเขียนทับ matches ให้กลายเป็นค่าว่าง {}
+            await updateDoc(doc(db, "tournaments", docId), { 
+                matches: {}, 
+                updatedAt: new Date() 
+            });
+            alert("✅ ล้างผลการแข่งขันเรียบร้อย! เริ่มแข่งใหม่ได้เลยครับ");
+            
+            // รีเฟรชหน้าจอเพื่อดึงข้อมูลที่ว่างเปล่ามาใหม่
+            window.location.reload();
+        } else {
+            alert("ยังไม่มีข้อมูลการจัดสายสำหรับรายการนี้ครับ");
+        }
+    } catch (e) {
+        alert("❌ เกิดข้อผิดพลาด: " + e.message);
+    } finally {
+        if(btn) btn.innerText = "🗑️ ล้างผลการแข่งทั้งหมด (Reset)";
+    }
+};
