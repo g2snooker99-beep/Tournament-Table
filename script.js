@@ -82,16 +82,19 @@ function generateBracket() {
 // ฟังก์ชันเซฟลง Firebase (จะถูกเรียกใช้โดยเชื่อมกับ firebase-config.js)
 async function saveToFirebase() {
     try {
-        // ดึงตัวแปร db มาจาก global scope ที่ตั้งไว้ใน firebase-config
-        const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+        // ดึงฟังก์ชันและ db มาจาก window ที่เราประกาศไว้ใน firebase-config.js
+        const { collection, addDoc } = window.dbFunctions;
+        const db = window.db;
+
+        if (!db) {
+            throw new Error("Firebase ยังไม่ได้เชื่อมต่อ กรุณาเช็ค config");
+        }
+
+        const docRef = await addDoc(collection(db, "tournaments"), tournamentDataToSave);
         
-        // สมมติว่าใน firebase-config.js คุณ export ตัวแปร db ออกมา
-        const docRef = await addDoc(collection(window.db, "tournaments"), tournamentDataToSave);
-        
-        alert("✅ บันทึกข้อมูลสายการแข่งขันลง Firebase สำเร็จ! (ID: " + docRef.id + ")");
+        alert("✅ บันทึกข้อมูลสายการแข่งขันลง Firebase สำเร็จ! \nID: " + docRef.id);
         document.getElementById('saveBtn').style.display = "none";
     } catch (e) {
         console.error("Error adding document: ", e);
-        alert("❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล เช็ค Console ดูนะครับ");
+        alert("❌ บันทึกไม่สำเร็จ: " + e.message);
     }
-}
