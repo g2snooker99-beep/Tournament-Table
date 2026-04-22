@@ -1,3 +1,12 @@
+
+// โหลด Canvas Confetti Library
+if (!document.getElementById('confetti-script')) {
+    const script = document.createElement('script');
+    script.id = 'confetti-script';
+    script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js';
+    document.head.appendChild(script);
+}
+
 window.generateInputFields = () => {
     const count = parseInt(document.getElementById('playerCount').value) || 8;
     const container = document.getElementById('nameFields');
@@ -80,7 +89,7 @@ window.initBracket = (players, matches = {}, zoneIdx = 0) => {
             <div class="champion-area" style="padding: 50px; transform: scale(1.15); box-shadow: 0 0 60px rgba(255,215,0,0.15); background: radial-gradient(circle, rgba(255,215,0,0.1) 0%, rgba(0,0,0,0) 80%); border-width: 4px; z-index: 10;">
                 <div class="zone-tag" style="background:var(--gold); box-shadow: 0 0 20px var(--gold-glow); font-size:1.8em; padding: 10px 40px; margin-bottom:30px;">GRAND FINAL</div>
                 <div style="color:var(--gold); font-size:1.4em; margin-bottom:10px; text-transform:uppercase; letter-spacing:4px; font-weight:900;">🏆 THE CHAMPION 🏆</div>
-                <div class="grand-champion-name" style="font-size:4.5em; text-shadow: 0 0 30px var(--gold); display:flex; align-items:center; justify-content:center; margin-bottom: 40px;">
+                <div class="grand-champion-name ${window.currentMatches['grand-champion'] ? 'epic-win' : ''}" style="font-size:4.5em; text-shadow: 0 0 30px var(--gold); display:flex; align-items:center; justify-content:center; margin-bottom: 40px;">
                     <span class="slot-name">${window.currentMatches['grand-champion'] || "???"}</span>
                     ${isAdmin() && window.currentMatches['grand-champion'] ? `<span class="delete-btn" style="font-size:24px; width:45px; height:45px; margin-left:20px;" onclick="if(confirm('ยกเลิกแชมป์รายการใช่หรือไม่?')){ delete window.currentMatches['grand-champion']; window.initBracket(window.currentPlayers, window.currentMatches, 99); }">✖</span>` : ''}
                 </div>
@@ -207,8 +216,47 @@ window.selectZoneChamp = (zIdx, name) => {
 };
 
 window.selectGrandChamp = (name) => {
-    if (!name || name.includes('รอ') || name === 'BYE') return; window.currentMatches['grand-champion'] = name;
+    if (!name || name.includes('รอ') || name === 'BYE') return;
+    window.currentMatches['grand-champion'] = name;
     window.initBracket(window.currentPlayers, window.currentMatches, 99);
+    
+    // 💥 เริ่มความอลังการ 💥
+    setTimeout(() => {
+        // 1. หน้าจอสั่น (Screen Shake)
+        document.body.classList.add('shake-screen');
+        setTimeout(() => document.body.classList.remove('shake-screen'), 600);
+
+        // 2. ยิงพลุจากมุมซ้ายและขวา (สีทอง, ขาว, ฟ้า G2)
+        if (typeof confetti !== 'undefined') {
+            var duration = 10 * 1000; // ยิงต่อเนื่อง 10 วินาที
+            var end = Date.now() + duration;
+
+            (function frame() {
+                // พลุฝั่งซ้าย
+                confetti({
+                    particleCount: 7,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0, y: 0.8 },
+                    colors: ['#ffd700', '#ffffff', '#00d4ff'],
+                    zIndex: 9999
+                });
+                // พลุฝั่งขวา
+                confetti({
+                    particleCount: 7,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1, y: 0.8 },
+                    colors: ['#ffd700', '#ffffff', '#00d4ff'],
+                    zIndex: 9999
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+        }
+    }, 100);
 };
 
 function createFinalSlot(idx, zoneLetter) {

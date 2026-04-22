@@ -142,3 +142,38 @@ body { margin: 0; font-family: 'Inter', 'Kanit', sans-serif; background-color: v
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+/* =========================================
+   EPIC GRAND FINAL EFFECTS
+========================================= */
+/* เอฟเฟกต์แผ่นดินไหวตอนได้แชมป์ */
+.shake-screen { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+@keyframes shake {
+    10%, 90% { transform: translate3d(-2px, 2px, 0); }
+    20%, 80% { transform: translate3d(4px, -4px, 0); }
+    30%, 50%, 70% { transform: translate3d(-8px, 6px, 0); }
+    40%, 60% { transform: translate3d(8px, -6px, 0); }
+}
+
+/* เอฟเฟกต์ชื่อแชมป์เรืองแสงและเด้งขึ้นมา */
+.epic-win .slot-name {
+    display: inline-block;
+    animation: popIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275), epicGlow 2s infinite alternate;
+    background: -webkit-linear-gradient(to right, #ffd700, #fff, #ffd700);
+    background: linear-gradient(to right, #ffd700, #fff, #ffd700);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5); /* เรืองแสงรอบๆ ตัวหนังสือ */
+}
+
+@keyframes popIn {
+    0% { transform: scale(0.1) translateY(200px); opacity: 0; filter: blur(10px); }
+    60% { transform: scale(1.2) translateY(-10px); opacity: 1; filter: blur(0); }
+    100% { transform: scale(1) translateY(0); }
+}
+
+@keyframes epicGlow {
+    0% { filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5)); transform: scale(1); }
+    50% { filter: drop-shadow(0 0 40px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 60px rgba(255, 215, 0, 0.8)); transform: scale(1.05); }
+    100% { filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5)); transform: scale(1); }
+}
