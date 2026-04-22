@@ -3,17 +3,15 @@ function generateInputFields() {
     let container = document.getElementById('nameFields');
     container.innerHTML = ''; 
     
-    // เพิ่มปุ่มสุ่มชื่ออัตโนมัติไว้ด้านบนของช่องกรอก
-    let autoFillBtn = `<button type="button" onclick="autoFillNames(${count})" style="background:#6c757d; margin-bottom:15px; width:100%;">🪄 สุ่มชื่ออัตโนมัติสำหรับ ${count} คน</button>`;
-    container.innerHTML = autoFillBtn;
+    // แสดงปุ่ม Auto-fill ด้านบน
+    document.getElementById('autoFillArea').innerHTML = `<button type="button" onclick="autoFillNames(${count})" style="background:#6c757d; margin-bottom:15px;">🪄 ใส่รายชื่อตัวอย่าง ${count} คน</button>`;
 
     for (let i = 1; i <= count; i++) {
-        container.innerHTML += `<div class="player-row"><input type="text" class="playerName" placeholder="Player ${i}"></div>`;
+        container.innerHTML += `<div class="player-row"><input type="text" class="playerName" placeholder="${i}. ชื่อผู้แข่ง"></div>`;
     }
     document.getElementById('playerInputs').style.display = 'block';
 }
 
-// ฟังก์ชันใหม่: ใส่ชื่อให้อัตโนมัติ
 function autoFillNames(count) {
     let inputs = document.querySelectorAll('.playerName');
     inputs.forEach((input, index) => {
@@ -44,20 +42,18 @@ function generateBracket() {
     resultDiv.innerHTML = `<div class="bracket-visual" id="bracketContainer"></div>`;
     let container = document.getElementById('bracketContainer');
 
-    // Round 1
-    let r1HTML = `<div class="round"><div class="round-title">Round 1</div>`;
+    let r1HTML = `<div class="round"><div class="round-title">รอบที่ 1</div>`;
     for (let i = 0; i < r1_count; i += 2) {
         r1HTML += `<div class="matchup"><div class="player-slot">${players[i]}</div><div class="vs-badge">VS</div><div class="player-slot">${players[i+1]}</div></div>`;
     }
     r1HTML += `</div>`;
     container.innerHTML += r1HTML;
 
-    // Byes / Round 2
     let byePlayers = players.slice(r1_count);
     if (byePlayers.length > 0 || r1_count > 0) {
-        let r2HTML = `<div class="round"><div class="round-title">Round 2 / Byes</div>`;
+        let r2HTML = `<div class="round"><div class="round-title">รอบที่ 2 (Bye)</div>`;
         byePlayers.forEach(name => {
-            r2HTML += `<div class="matchup"><div class="player-slot">${name}</div><div class="player-slot" style="color:#555"><i>Waiting...</i></div></div>`;
+            r2HTML += `<div class="matchup"><div class="player-slot">${name}</div><div class="player-slot" style="color:#555"><i>รอผู้ชนะจากรอบแรก</i></div></div>`;
         });
         r2HTML += `</div>`;
         container.innerHTML += r2HTML;
@@ -72,8 +68,8 @@ async function saveToFirebase() {
     try {
         const { collection, addDoc } = window.dbFunctions;
         const docRef = await addDoc(collection(window.db, "tournaments"), tournamentDataToSave);
-        alert("✅ บันทึกสำเร็จ ID: " + docRef.id);
+        alert("✅ บันทึกเรียบร้อย! ID: " + docRef.id);
     } catch (e) {
-        alert("❌ บันทึกไม่สำเร็จ: " + e.message);
+        alert("❌ Error: " + e.message);
     }
 }
