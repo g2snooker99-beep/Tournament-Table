@@ -15,4 +15,4 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 console.log("Firebase initialized successfully");
-console.log("Firestore database reference:", db);
+console.log("Firestore database reference:", db);export { db, collection, addDoc, getDoc, getDocs, updateDoc, doc, query, where, onSnapshot, orderBy, limit };
