@@ -107,13 +107,13 @@
 
                 <div id="playerInputs">
                     <div id="autoFillArea" style="display:none;"></div>
-<div style="text-align: right; margin-bottom: 15px;">
-    <button onclick="shuffleInputs()" style="background: linear-gradient(135deg, #f39c12 0%, #d68910 100%); color: #000; padding: 12px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4); font-size: 1.1em; transition: 0.2s;">🔀 สลับตำแหน่งสายแข่ง (Shuffle)</button>
-</div>
+                    <div style="text-align: right; margin-bottom: 15px;">
+                        <button onclick="shuffleInputs()" style="background: linear-gradient(135deg, #f39c12 0%, #d68910 100%); color: #000; padding: 12px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4); font-size: 1.1em; transition: 0.2s;">🔀 สลับตำแหน่งสายแข่ง (Shuffle)</button>
+                    </div>
                     <div id="nameFields" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
                     <button class="btn-generate" onclick="saveAndGoToBracket()" id="saveBtn">💾 บันทึกและอัปเดตสายการแข่งขัน</button>
-<button id="resetTourneyBtn" onclick="resetTournamentData()" style="background: linear-gradient(135deg, #dc3545 0%, #a71d2a 100%); width: 100%; padding: 15px; border: none; border-radius: 10px; color: white; font-size: 1.1em; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 20px rgba(220, 53, 69, 0.4); margin-top: 15px;">🗑️ ล้างผลการแข่งทั้งหมด (Reset เริ่มใหม่)</button>
-<button id="deleteCampaignBtn" onclick="deleteCampaignCompletely()" style="background: linear-gradient(135deg, #6f1d1b 0%, #3d0c0a 100%); width: 100%; padding: 15px; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; color: white; font-size: 1.1em; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 20px rgba(111, 29, 27, 0.45); margin-top: 15px;">🔥 ลบรายการแข่งขันนี้ทั้งหมด</button>
+                    <button id="resetTourneyBtn" onclick="resetTournamentData()" style="background: linear-gradient(135deg, #dc3545 0%, #a71d2a 100%); width: 100%; padding: 15px; border: none; border-radius: 10px; color: white; font-size: 1.1em; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 20px rgba(220, 53, 69, 0.4); margin-top: 15px;">🗑️ ล้างผลการแข่งทั้งหมด (Reset เริ่มใหม่)</button>
+                    <button id="deleteCampaignBtn" onclick="deleteCampaignCompletely()" style="background: linear-gradient(135deg, #6f1d1b 0%, #3d0c0a 100%); width: 100%; padding: 15px; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; color: white; font-size: 1.1em; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 20px rgba(111, 29, 27, 0.45); margin-top: 15px;">🔥 ลบรายการแข่งขันนี้ทั้งหมด</button>
                 </div>
             </div>
         </div>
@@ -123,7 +123,6 @@
             <div style="background:rgba(0,0,0,0.3); padding:20px; border-radius:12px;">
                 <p>🔗 <b>Admin Link (จัดการผล):</b></p>
                 <a id="adminUrl" href="#" target="_blank" style="color:var(--accent); word-break:break-all; font-weight:bold; text-decoration: underline; display: inline-block;"></a>
-                
                 <p style="margin-top:15px;">📺 <b>Live Link (โชว์บนจอ):</b></p>
                 <a id="liveUrl" href="#" target="_blank" style="color:var(--accent); word-break:break-all; font-weight:bold; text-decoration: underline; display: inline-block;"></a>
             </div>
@@ -273,12 +272,15 @@
             const campaignName = select.selectedOptions?.[0]?.text || "";
             const setupArea = document.getElementById('setupArea');
             const syncStatus = document.getElementById('syncStatus');
+            
             if (!cid) {
                 updateSetupHeading();
                 setupArea.style.display = 'none';
+                document.getElementById('linkDisplayArea').style.display = 'none';
                 await loadCampaignEditor("");
                 return;
             }
+            
             updateSetupHeading(campaignName);
             await loadCampaignEditor(cid);
             setupArea.style.display = 'block';
@@ -286,16 +288,36 @@
 
             const q = query(collection(db, "tournaments"), where("campaignId", "==", cid));
             const snap = await getDocs(q);
+            
             if (!snap.empty) {
-                const tourney = snap.docs[0].data();
+                const tourneyDoc = snap.docs[0];
+                const tourney = tourneyDoc.data();
+                
                 document.getElementById('playerCount').value = tourney.players.length;
                 window.generateInputFields();
+                
                 const inputs = document.querySelectorAll('.playerName');
                 tourney.players.forEach((p, i) => { if(inputs[i]) inputs[i].value = p.name || ""; });
                 syncStatus.innerHTML = "✅ โหลดสถานะล่าสุดจากฐานข้อมูลแล้ว";
+
+                const base = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+                const adminLink = `${base}bracket.html?id=${tourneyDoc.id}`;
+                const liveLink = `${base}live.html?id=${tourneyDoc.id}`;
+
+                if (document.getElementById('adminUrl')) {
+                    document.getElementById('adminUrl').innerText = adminLink;
+                    document.getElementById('adminUrl').href = adminLink;
+                }
+                if (document.getElementById('liveUrl')) {
+                    document.getElementById('liveUrl').innerText = liveLink;
+                    document.getElementById('liveUrl').href = liveLink;
+                }
+                document.getElementById('linkDisplayArea').style.display = 'block';
+
             } else {
                 syncStatus.innerHTML = "✨ รายการใหม่ (ยังไม่มีการจัดสาย)";
                 window.generateInputFields();
+                document.getElementById('linkDisplayArea').style.display = 'none'; 
             }
         };
 
