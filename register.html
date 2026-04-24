@@ -10,6 +10,7 @@
         .campaign-banner { max-width: 100%; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         .info-box { background: #252525; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #00d4ff; text-align: left;}
         .jersey-preview { max-width: 250px; display: block; margin: 10px auto; border-radius: 8px; }
+        .size-chart-preview { max-width: 100%; display: block; margin: 10px auto; border-radius: 8px; background:#111; }
         select { width: 100%; padding: 12px; background: #2a2a2a; border: 1px solid #444; border-radius: 8px; color: white; font-family: inherit; }
     </style>
 </head>
@@ -43,7 +44,11 @@
                     
                     <div id="jerseySection" class="form-group" style="display:none; background:#222; padding:15px; border-radius:8px; border: 1px dashed #555;">
                         <label style="color:#00d4ff;">👕 รูปแบบเสื้อแข่งขัน</label>
-                        <img id="jerseyImg" class="jersey-preview" alt="Jersey">
+                        <img id="jerseyImg" class="jersey-preview" alt="Jersey" style="display:none;">
+                        <div id="sizeChartWrap" style="display:none; margin-top:15px;">
+                            <label style="color:#00d4ff;">📏 ตารางไซส์เสื้อ</label>
+                            <img id="sizeChartImg" class="size-chart-preview" alt="Size chart">
+                        </div>
                         <label style="margin-top:15px;">ไซส์เสื้อที่ต้องการ</label>
                         <select id="jerseySize">
                             <option value="-">ไม่ระบุ / ไม่รับเสื้อ</option>
@@ -73,7 +78,7 @@
     </div>
 
     <script type="module">
-        import { db, doc, getDoc, collection, addDoc } from "./firebase-config.js";
+        import { db, doc, getDoc, getDocs, query, where, collection, addDoc } from "./firebase-config.js";
 
 // ดึง ID แคมเปญจาก URL
         const urlParams = new URLSearchParams(window.location.search);
@@ -100,10 +105,18 @@
                         banner.src = data.bannerImg;
                         banner.style.display = 'block';
                     }
-                    // โชว์รูปเสื้อและให้เลือกไซส์ ถ้าแอดมินอัปโหลดไว้
-                    if (data.jerseyImg) {
+                    // โชว์ข้อมูลเสื้อและตารางไซส์ ถ้าแอดมินอัปโหลดไว้
+                    if (data.jerseyImg || data.sizeChartImg) {
                         document.getElementById('jerseySection').style.display = 'block';
-                        document.getElementById('jerseyImg').src = data.jerseyImg;
+                    }
+                    if (data.jerseyImg) {
+                        const jerseyImg = document.getElementById('jerseyImg');
+                        jerseyImg.src = data.jerseyImg;
+                        jerseyImg.style.display = 'block';
+                    }
+                    if (data.sizeChartImg) {
+                        document.getElementById('sizeChartWrap').style.display = 'block';
+                        document.getElementById('sizeChartImg').src = data.sizeChartImg;
                     }
 
                     document.getElementById('loading').style.display = 'none';
@@ -139,6 +152,8 @@
         reader.onerror = reject;
     });
 
+        const normalizePlayerName = (value) => value.trim().replace(/\s+/g, ' ').toLowerCase();
+
         // จัดการเมื่อกดปุ่ม Submit
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -147,6 +162,22 @@
             btn.disabled = true;
 
             try {
+                const playerName = document.getElementById('playerName').value.trim();
+                const normalizedPlayerName = normalizePlayerName(playerName);
+
+                const existingRegs = await getDocs(query(collection(db, "registrations"), where("campaignId", "==", campaignId)));
+                const duplicateExists = existingRegs.docs.some((docSnap) => {
+                    const existingName = docSnap.data().playerName || "";
+                    return normalizePlayerName(existingName) === normalizedPlayerName;
+                });
+
+                if (duplicateExists) {
+                    alert("❌ มีผู้สมัครใช้ชื่อนี้แล้ว กรุณาตรวจสอบชื่อหรือเพิ่มข้อมูลกำกับให้ต่างจากเดิม");
+                    btn.innerText = "✅ ยืนยันการสมัคร";
+                    btn.disabled = false;
+                    return;
+                }
+
                 // แปลงสลิปโอนเงินเป็น Base64
                 const slipFile = document.getElementById('paymentSlip').files[0];
                 const slipBase64 = await fileToBase64(slipFile);
@@ -154,8 +185,8 @@
                 // สร้าง Object เก็บข้อมูลคนสมัคร
                 const regData = {
                     campaignId: campaignId,
-                    playerName: document.getElementById('playerName').value,
-                    phone: document.getElementById('playerPhone').value,
+                    playerName: playerName,
+                    phone: document.getElementById('playerPhone').value.trim(),
                     jerseySize: document.getElementById('jerseySize') ? document.getElementById('jerseySize').value : "-",
                     paymentSlip: slipBase64,
                     status: "pending", // สถานะรอแอดมินตรวจสอบ

@@ -52,6 +52,7 @@
                     <div id="nameFields" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
                     <button class="btn-generate" onclick="saveAndGoToBracket()" id="saveBtn">💾 บันทึกและอัปเดตสายการแข่งขัน</button>
 <button id="resetTourneyBtn" onclick="resetTournamentData()" style="background: linear-gradient(135deg, #dc3545 0%, #a71d2a 100%); width: 100%; padding: 15px; border: none; border-radius: 10px; color: white; font-size: 1.1em; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 20px rgba(220, 53, 69, 0.4); margin-top: 15px;">🗑️ ล้างผลการแข่งทั้งหมด (Reset เริ่มใหม่)</button>
+<button id="deleteCampaignBtn" onclick="deleteCampaignCompletely()" style="background: linear-gradient(135deg, #6f1d1b 0%, #3d0c0a 100%); width: 100%; padding: 15px; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; color: white; font-size: 1.1em; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 20px rgba(111, 29, 27, 0.45); margin-top: 15px;">🔥 ลบรายการแข่งขันนี้ทั้งหมด</button>
                 </div>
             </div>
         </div>
@@ -68,7 +69,7 @@
     </div>
 
     <script type="module">
-        import { db, collection, addDoc, getDoc, getDocs, updateDoc, doc, query, where, onSnapshot } from "./firebase-config.js?v=4";
+        import { db, collection, addDoc, getDoc, getDocs, updateDoc, deleteDoc, doc, query, where, onSnapshot } from "./firebase-config.js?v=4";
         window.db = db;
         window.dbFunctions = { db, collection, addDoc, getDoc, getDocs, updateDoc, doc, query, where, onSnapshot };
 
@@ -101,6 +102,52 @@
             } else {
                 syncStatus.innerHTML = "✨ รายการใหม่ (ยังไม่มีการจัดสาย)";
                 window.generateInputFields();
+            }
+        };
+
+        window.deleteCampaignCompletely = async () => {
+            const select = document.getElementById('campaignSelectSetup');
+            const cid = select.value;
+            if (!cid) {
+                alert("กรุณาเลือกรายการแข่งขันก่อน");
+                return;
+            }
+
+            const campaignName = select.selectedOptions?.[0]?.text || "รายการนี้";
+            if (!confirm(`ต้องการลบ "${campaignName}" ทั้งหมดใช่หรือไม่?\nข้อมูลผู้สมัคร สายแข่ง และลิงก์ที่เกี่ยวข้องจะถูกลบถาวร`)) {
+                return;
+            }
+
+            const btn = document.getElementById('deleteCampaignBtn');
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = "⏳ กำลังลบรายการแข่งขัน...";
+
+            try {
+                const regSnap = await getDocs(query(collection(db, "registrations"), where("campaignId", "==", cid)));
+                for (const regDoc of regSnap.docs) {
+                    await deleteDoc(doc(db, "registrations", regDoc.id));
+                }
+
+                const tourneySnap = await getDocs(query(collection(db, "tournaments"), where("campaignId", "==", cid)));
+                for (const tourneyDoc of tourneySnap.docs) {
+                    await deleteDoc(doc(db, "tournaments", tourneyDoc.id));
+                }
+
+                await deleteDoc(doc(db, "campaigns", cid));
+
+                document.getElementById('setupArea').style.display = 'none';
+                document.getElementById('linkDisplayArea').style.display = 'none';
+                document.getElementById('syncStatus').innerText = '';
+                select.value = '';
+
+                await loadCampaigns();
+                alert("✅ ลบรายการแข่งขันและข้อมูลที่เกี่ยวข้องทั้งหมดเรียบร้อย");
+            } catch (e) {
+                alert("❌ " + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
             }
         };
 

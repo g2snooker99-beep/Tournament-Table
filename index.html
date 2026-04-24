@@ -47,6 +47,12 @@
                     <input type="file" id="jerseyImage" accept="image/*">
                     <small style="color:#888;">* อัปโหลดแบบเสื้อเพื่อให้นักกีฬาดูเป็นตัวอย่าง</small>
                 </div>
+
+                <div class="form-group">
+                    <label>รูปตารางไซส์เสื้อ (ถ้ามี)</label>
+                    <input type="file" id="sizeChartImage" accept="image/*">
+                    <small style="color:#888;">* อัปโหลดตารางไซส์เพื่อให้ผู้สมัครเลือกขนาดเสื้อได้ง่ายขึ้น</small>
+                </div>
                 
                 <button type="submit" class="btn-confirm" style="width:100%; font-size:1.2em; margin-top:10px;" id="submitBtn">💾 บันทึกและเปิดรับสมัคร</button>
             </form>
@@ -115,9 +121,11 @@
                 // ดึงรูปภาพ
                 const tourneyImgFile = document.getElementById('tourneyImage').files[0];
                 const jerseyImgFile = document.getElementById('jerseyImage').files[0];
+                const sizeChartImgFile = document.getElementById('sizeChartImage').files[0];
                 
                 const bannerBase64 = await fileToBase64(tourneyImgFile);
                 const jerseyBase64 = await fileToBase64(jerseyImgFile);
+                const sizeChartBase64 = await fileToBase64(sizeChartImgFile);
 
                 // สร้าง Object ข้อมูล
                 const campaignData = {
@@ -126,6 +134,7 @@
                     fee: document.getElementById('entryFee').value,
                     bannerImg: bannerBase64,
                     jerseyImg: jerseyBase64,
+                    sizeChartImg: sizeChartBase64,
                     status: "open", // สถานะเปิดรับสมัคร
                     createdAt: new Date().toISOString()
                 };
