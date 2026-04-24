@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=grandlux">
     <title>G2 LIVE | TV Broadcast</title>
     <style>
         /* 🎛️ สไตล์ของแถบรีโมทควบคุม (ซ่อนตัวเมื่อไม่ใช้งาน) */
@@ -167,7 +167,7 @@
                         window.initBracket(window.currentPlayers, window.currentMatches, zonesSequence[zoneIdx]);
                         if (isAutoPlay) startAutoPlay();
                         updateLiveHeader(window.currentTournamentName);
-                        window.initialRender = true;
+python3 -m http.server 5500                        window.initialRender = true;
                     } else {
                         // อัปเดตข้อมูลสดๆ โดยไม่เปลี่ยนหน้าจอที่ล็อคไว้
                         window.initBracket(window.currentPlayers, window.currentMatches, zonesSequence[zoneIdx]);
