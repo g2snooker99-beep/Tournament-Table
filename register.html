@@ -38,37 +38,60 @@
             padding: 8px;
             cursor: zoom-in;
         }
+        
+        /* 🛠️ แก้ไขส่วนของ Modal แสดงรูปภาพ 🛠️ */
         #imagePreviewModal {
             display: none;
             position: fixed !important;
-            inset: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             width: 100vw;
             height: 100vh;
-            padding: 24px;
             z-index: 99999;
-            background: rgba(5, 8, 12, 0.88);
+            background: rgba(5, 8, 12, 0.95); /* พื้นหลังเข้มขึ้นนิดนึงให้รูปเด่น */
             backdrop-filter: blur(10px);
             align-items: center;
             justify-content: center;
         }
         #imagePreviewModal.open {
-            display: flex;
+            display: flex !important;
         }
+        
+        /* 🛠️ ล็อกตำแหน่งปุ่มปิดให้อยู่มุมขวาบนเสมอ 🛠️ */
+        #closeImagePreviewBtn {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 35px;
+            font-weight: bold;
+            color: #fff;
+            cursor: pointer;
+            z-index: 100000;
+            background: rgba(255,255,255,0.1);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+        #closeImagePreviewBtn:hover {
+            background: #dc3545; /* เปลี่ยนเป็นสีแดงตอนเอาเมาส์ชี้ */
+        }
+        
         #previewModalImage {
             display: block;
-            position: static !important;
-            transform: none !important;
-            margin: 0 auto;
-            max-width: min(92vw, 1100px);
-            max-height: 88vh;
+            position: relative;
+            max-width: 90vw;
+            max-height: 85vh;
             width: auto;
             height: auto;
             object-fit: contain;
-            background: #0f1318;
-            padding: 10px;
-            border-radius: 16px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
         }
+        /* ------------------------------------- */
+
         select { width: 100%; padding: 12px; background: #2a2a2a; border: 1px solid #444; border-radius: 8px; color: white; font-family: inherit; }
     </style>
 </head>
@@ -152,7 +175,7 @@
     <script type="module">
         import { db, doc, getDoc, getDocs, query, where, collection, addDoc } from "./firebase-config.js";
 
-// ดึง ID แคมเปญจาก URL
+        // ดึง ID แคมเปญจาก URL
         const urlParams = new URLSearchParams(window.location.search);
         const campaignId = urlParams.get('campaign');
 
@@ -264,7 +287,7 @@
                 canvas.width = w; canvas.height = h;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, w, h);
-                // บีบอัดเป็น JPEG คุณภาพ 70% (ลดขนาดไฟล์ได้มหาศาล)
+                // บีบอัดเป็น JPEG คุณภาพ 70%
                 resolve(canvas.toDataURL('image/jpeg', 0.7));
             };
             img.src = e.target.result;
