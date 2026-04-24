@@ -20,8 +20,8 @@
         <main class="admin-main">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 40px;">
                 <div>
-                    <h1 style="margin:0; font-size: 1.8em;">แผงควบคุมแอดมิน</h1>
-                    <p style="color:var(--text-dim); margin-top:5px;">ตรวจสอบและอนุมัติผู้เล่นแบบ Real-time</p>
+                    <h1 id="dashboardTitle" style="margin:0; font-size: 1.8em;">แผงควบคุมแอดมิน</h1>
+                    <p id="dashboardSubtitle" style="color:var(--text-dim); margin-top:5px;">ตรวจสอบและอนุมัติผู้เล่นแบบ Real-time</p>
                 </div>
                 <select id="campaignSelect" class="campaign-selector" onchange="loadRegistrations()">
                     <option value="">-- กำลังโหลดรายการแข่งขัน --</option>
@@ -46,13 +46,13 @@
             <div id="contentView" style="display:none;">
                 <div class="section-header">
                     <span style="background:var(--status-pending); width:12px; height:12px; border-radius:50%;"></span>
-                    <h2>รายการรอการตรวจสอบ (Pending)</h2>
+                    <h2 id="pendingSectionTitle">รายการรอการตรวจสอบ (Pending)</h2>
                 </div>
                 <div id="pendingGrid" class="card-grid" style="margin-bottom: 50px;"></div>
 
                 <div class="section-header">
                     <span style="background:var(--status-success); width:12px; height:12px; border-radius:50%;"></span>
-                    <h2>รายชื่อที่อนุมัติแล้ว (Approved)</h2>
+                    <h2 id="approvedSectionTitle">รายชื่อที่อนุมัติแล้ว (Approved)</h2>
                 </div>
                 <div id="approvedGrid" class="card-grid"></div>
             </div>
@@ -74,6 +74,27 @@
 
 let unsubscribe = null;
 
+        function updateDashboardHeadings(campaignName = "") {
+            const title = document.getElementById('dashboardTitle');
+            const subtitle = document.getElementById('dashboardSubtitle');
+            const pendingTitle = document.getElementById('pendingSectionTitle');
+            const approvedTitle = document.getElementById('approvedSectionTitle');
+
+            if (campaignName) {
+                title.innerText = `แผงควบคุม: ${campaignName}`;
+                subtitle.innerText = `ตรวจสอบและอนุมัติผู้เล่นของรายการ ${campaignName} แบบ Real-time`;
+                pendingTitle.innerText = `รายการรอการตรวจสอบ - ${campaignName}`;
+                approvedTitle.innerText = `รายชื่อที่อนุมัติแล้ว - ${campaignName}`;
+                document.title = `Tournament-Table | ${campaignName}`;
+            } else {
+                title.innerText = "แผงควบคุมแอดมิน";
+                subtitle.innerText = "ตรวจสอบและอนุมัติผู้เล่นแบบ Real-time";
+                pendingTitle.innerText = "รายการรอการตรวจสอบ (Pending)";
+                approvedTitle.innerText = "รายชื่อที่อนุมัติแล้ว (Approved)";
+                document.title = "Tournament-Table | Admin Dashboard";
+            }
+        }
+
         async function loadCampaigns() {
             const select = document.getElementById('campaignSelect');
             try {
@@ -89,15 +110,18 @@ let unsubscribe = null;
 
         window.loadRegistrations = () => {
             const cid = document.getElementById('campaignSelect').value;
+            const campaignName = document.getElementById('campaignSelect').selectedOptions?.[0]?.text || "";
             const stats = document.getElementById('statsGrid');
             const content = document.getElementById('contentView');
             const empty = document.getElementById('emptyView');
             
             if (!cid) { 
+                updateDashboardHeadings();
                 stats.style.display = 'none'; content.style.display = 'none'; empty.style.display = 'block';
                 if(unsubscribe) unsubscribe(); return; 
             }
 
+            updateDashboardHeadings(campaignName);
             stats.style.display = 'grid'; content.style.display = 'block'; empty.style.display = 'none';
             if (unsubscribe) unsubscribe();
 

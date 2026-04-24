@@ -8,9 +8,12 @@
 </head>
 <body>
     <div class="container">
-        <h2 style="text-align: center; font-size: 2.2em; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 30px;">
-            🎯 การจัดการสายแข่ง (Setup Hub)
-        </h2>
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h2 id="setupPageTitle" style="text-align: center; font-size: 2.2em; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 10px;">
+                🎯 การจัดการสายแข่ง (Setup Hub)
+            </h2>
+            <p id="setupPageSubtitle" style="color:var(--text-dim); margin:0;">เลือกรายการแข่งขันเพื่อเริ่มจัดสายและอัปเดตผล</p>
+        </div>
         
         <div style="text-align: center; margin-bottom: 25px;">
             <button onclick="window.location.href='dashboard.html'" style="background:rgba(255,255,255,0.1); color:white; padding:10px 20px; border-radius:12px; border:1px solid var(--glass-border); cursor:pointer;">
@@ -82,11 +85,29 @@
             } catch (e) { console.error(e); }
         }
 
+        window.updateSetupHeading = (campaignName = "") => {
+            const title = document.getElementById('setupPageTitle');
+            const subtitle = document.getElementById('setupPageSubtitle');
+
+            if (campaignName) {
+                title.innerText = `🎯 จัดการสายแข่ง: ${campaignName}`;
+                subtitle.innerText = `จัดสาย บันทึกผล และสร้างลิงก์ถ่ายทอดสดสำหรับรายการ ${campaignName}`;
+                document.title = `Tournament-Table | ${campaignName} Setup`;
+            } else {
+                title.innerText = "🎯 การจัดการสายแข่ง (Setup Hub)";
+                subtitle.innerText = "เลือกรายการแข่งขันเพื่อเริ่มจัดสายและอัปเดตผล";
+                document.title = "Tournament-Table | Setup Hub";
+            }
+        };
+
         window.checkExistingSetup = async () => {
-            const cid = document.getElementById('campaignSelectSetup').value;
+            const select = document.getElementById('campaignSelectSetup');
+            const cid = select.value;
+            const campaignName = select.selectedOptions?.[0]?.text || "";
             const setupArea = document.getElementById('setupArea');
             const syncStatus = document.getElementById('syncStatus');
-            if (!cid) { setupArea.style.display = 'none'; return; }
+            if (!cid) { updateSetupHeading(); setupArea.style.display = 'none'; return; }
+            updateSetupHeading(campaignName);
             setupArea.style.display = 'block';
             syncStatus.innerText = "⏳ กำลังดึงข้อมูลล่าสุด...";
 

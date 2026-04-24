@@ -28,9 +28,28 @@
         .ctrl-btn.final-btn.active { background: var(--gold); color: #000; box-shadow: 0 0 15px var(--gold-glow); }
         .auto-btn { background: #28a745; color: white; }
         .auto-btn.paused { background: #dc3545; color: white; }
+        .live-header {
+            position: fixed; top: 20px; left: 20px;
+            z-index: 1001; padding: 14px 18px; border-radius: 18px;
+            background: rgba(10, 10, 15, 0.88); border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+            backdrop-filter: blur(10px);
+        }
+        #liveTitle {
+            color: white; font-size: 1.15em; font-weight: 800; letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        #liveStage {
+            color: var(--gold); font-size: 0.9em; margin-top: 4px; letter-spacing: 1px;
+        }
     </style>
 </head>
 <body>
+    <div id="liveHeader" class="live-header">
+        <div id="liveTitle">TOURNAMENT LIVE</div>
+        <div id="liveStage">กำลังโหลด...</div>
+    </div>
+
     <div class="live-container">
         <div id="bracketWrapper">
             <div id="bracket"></div>
@@ -40,7 +59,7 @@
     <div id="liveControls"></div>
 
     <script type="module">
-        import { db, doc, onSnapshot } from "./firebase-config.js?v=10";
+        import { db, doc, getDoc, onSnapshot } from "./firebase-config.js?v=10";
         const urlParams = new URLSearchParams(window.location.search);
         const tourneyId = urlParams.get('id');
 
@@ -48,6 +67,27 @@
         let zoneIdx = 0;
         let isAutoPlay = true;
         let slideTimer = null;
+
+        const getZoneLabel = (zoneValue) => zoneValue === 99 ? "GRAND FINAL" : `ZONE ${String.fromCharCode(65 + zoneValue)}`;
+
+        function updateLiveHeader(campaignName = "Tournament Live") {
+            const currentZone = zonesSequence[zoneIdx] ?? 0;
+            document.getElementById('liveTitle').innerText = campaignName;
+            document.getElementById('liveStage').innerText = `กำลังแสดง ${getZoneLabel(currentZone)}`;
+            document.title = `Tournament-Table | ${campaignName} Live`;
+        }
+
+        async function resolveTournamentName(data) {
+            if (data.campaignName) return data.campaignName;
+            if (!data.campaignId) return "";
+            try {
+                const campaignSnap = await getDoc(doc(db, "campaigns", data.campaignId));
+                if (campaignSnap.exists()) return campaignSnap.data().name || "";
+            } catch (e) {
+                console.error(e);
+            }
+            return "";
+        }
 
         // 🎛️ ฟังก์ชันวาดปุ่มกดลงบนรีโมท
         function renderControls() {
@@ -84,6 +124,7 @@
                     clearInterval(slideTimer);
                     zoneIdx = index;
                     window.initBracket(window.currentPlayers, window.currentMatches, z);
+                    updateLiveHeader(window.currentTournamentName || "Tournament Live");
                     renderControls();
                 };
                 ctrl.appendChild(btn);
@@ -98,15 +139,17 @@
                 zoneIdx = (zoneIdx + 1) % zonesSequence.length;
                 const activeZone = zonesSequence[zoneIdx];
                 window.initBracket(window.currentPlayers, window.currentMatches, activeZone);
+                updateLiveHeader(window.currentTournamentName || "Tournament Live");
             }, 15000); // สลับทุกๆ 15 วินาที
         }
 
         if (tourneyId) {
-            onSnapshot(doc(db, "tournaments", tourneyId), (docSnap) => {
+            onSnapshot(doc(db, "tournaments", tourneyId), async (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     window.currentPlayers = data.players || [];
                     window.currentMatches = data.matches || {};
+                    window.currentTournamentName = await resolveTournamentName(data) || "Tournament Live";
                     
                     const totalZones = Math.ceil(window.currentPlayers.length / 32);
                     zonesSequence = Array.from({length: totalZones}, (_, i) => i);
@@ -123,6 +166,7 @@
                     if (!window.initialRender) {
                         window.initBracket(window.currentPlayers, window.currentMatches, zonesSequence[zoneIdx]);
                         if (isAutoPlay) startAutoPlay();
+                        updateLiveHeader(window.currentTournamentName);
                         window.initialRender = true;
                     } else {
                         // อัปเดตข้อมูลสดๆ โดยไม่เปลี่ยนหน้าจอที่ล็อคไว้

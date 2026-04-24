@@ -30,10 +30,22 @@
     </div>
 
     <script type="module">
-        import { db, doc, updateDoc, onSnapshot } from "./firebase-config.js";
+        import { db, doc, getDoc, updateDoc, onSnapshot } from "./firebase-config.js";
         const urlParams = new URLSearchParams(window.location.search);
         const tourneyId = urlParams.get('id');
         window.currentZoneIdx = 0;
+
+        async function resolveTournamentName(data) {
+            if (data.campaignName) return data.campaignName;
+            if (!data.campaignId) return "";
+            try {
+                const campaignSnap = await getDoc(doc(db, "campaigns", data.campaignId));
+                if (campaignSnap.exists()) return campaignSnap.data().name || "";
+            } catch (e) {
+                console.error(e);
+            }
+            return "";
+        }
 
         if (!tourneyId) { alert("ไม่พบรหัสการแข่งขัน!"); window.location.href = 'setup.html'; }
 
@@ -79,11 +91,13 @@
             nav.appendChild(finalBtn);
         };
 
-        onSnapshot(doc(db, "tournaments", tourneyId), (docSnap) => {
+        onSnapshot(doc(db, "tournaments", tourneyId), async (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 const titleEl = document.getElementById('tournamentTitle');
-                if(titleEl && data.campaignName) titleEl.innerText = `🏆 ${data.campaignName}`;
+                const campaignName = await resolveTournamentName(data);
+                if (titleEl) titleEl.innerText = `🏆 ${campaignName || "โหลดข้อมูล..."}`;
+                document.title = campaignName ? `Tournament-Table | ${campaignName} Bracket` : "Tournament-Table | จัดการผล";
                 window.currentPlayers = data.players || [];
                 window.currentMatches = data.matches || {};
                 window.renderZoneNav(window.currentPlayers.length);
