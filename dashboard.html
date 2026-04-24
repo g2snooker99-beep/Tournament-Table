@@ -23,9 +23,16 @@
                     <h1 id="dashboardTitle" style="margin:0; font-size: 1.8em;">แผงควบคุมแอดมิน</h1>
                     <p id="dashboardSubtitle" style="color:var(--text-dim); margin-top:5px;">ตรวจสอบและอนุมัติผู้เล่นแบบ Real-time</p>
                 </div>
-                <select id="campaignSelect" class="campaign-selector" onchange="loadRegistrations()">
-                    <option value="">-- กำลังโหลดรายการแข่งขัน --</option>
-                </select>
+                <div class="dashboard-actions-wrap">
+                    <select id="campaignSelect" class="campaign-selector" onchange="loadRegistrations()">
+                        <option value="">-- กำลังโหลดรายการแข่งขัน --</option>
+                    </select>
+                    <div class="dashboard-action-bar">
+                        <button id="previewRegisterBtn" class="dashboard-action-btn" type="button" onclick="openRegisterPage()" disabled>👁️ เลือกรายการแข่งขันก่อน</button>
+                        <button id="copyRegisterBtn" class="dashboard-action-btn" type="button" onclick="copyRegisterLink()" disabled>🔗 เลือกรายการแข่งขันก่อน</button>
+                        <button id="editCampaignBtn" class="dashboard-action-btn primary" type="button" onclick="goToCampaignEditor()" disabled>✏️ เลือกรายการแข่งขันก่อน</button>
+                    </div>
+                </div>
             </div>
 
             <div id="statsGrid" class="stats-grid" style="display:none;">
@@ -95,6 +102,78 @@ let unsubscribe = null;
             }
         }
 
+        function getRegisterPageUrl(campaignId = "") {
+            const select = document.getElementById('campaignSelect');
+            const cid = campaignId || select?.value || "";
+            if (!cid) return "";
+            const base = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+            return `${base}register.html?campaign=${encodeURIComponent(cid)}`;
+        }
+
+        function updateDashboardActions(campaignId = "", campaignName = "") {
+            const editBtn = document.getElementById('editCampaignBtn');
+            const previewBtn = document.getElementById('previewRegisterBtn');
+            const copyBtn = document.getElementById('copyRegisterBtn');
+            const select = document.getElementById('campaignSelect');
+            const resolvedId = campaignId || select?.value || "";
+            const resolvedName = campaignName || select?.selectedOptions?.[0]?.text || "";
+            const enabled = !!resolvedId;
+
+            if (!editBtn || !previewBtn || !copyBtn) return;
+
+            editBtn.disabled = !enabled;
+            previewBtn.disabled = !enabled;
+            copyBtn.disabled = !enabled;
+
+            editBtn.innerText = enabled ? "✏️ แก้ไขรายละเอียดรายการ" : "✏️ เลือกรายการแข่งขันก่อน";
+            previewBtn.innerText = enabled ? "👁️ ดูหน้ารับสมัคร" : "👁️ เลือกรายการแข่งขันก่อน";
+            copyBtn.innerText = enabled ? "🔗 คัดลอกลิงก์สมัคร" : "🔗 เลือกรายการแข่งขันก่อน";
+
+            editBtn.title = enabled ? `แก้ไข ${resolvedName}` : "";
+            previewBtn.title = enabled ? `เปิดหน้ารับสมัครของ ${resolvedName}` : "";
+            copyBtn.title = enabled ? `คัดลอกลิงก์สมัครของ ${resolvedName}` : "";
+        }
+
+        window.goToCampaignEditor = () => {
+            const select = document.getElementById('campaignSelect');
+            const cid = select?.value;
+            if (!cid) {
+                alert("กรุณาเลือกรายการแข่งขันก่อน");
+                return;
+            }
+            window.location.href = `setup.html?campaign=${encodeURIComponent(cid)}`;
+        };
+
+        window.openRegisterPage = () => {
+            const url = getRegisterPageUrl();
+            if (!url) {
+                alert("กรุณาเลือกรายการแข่งขันก่อน");
+                return;
+            }
+            window.open(url, "_blank");
+        };
+
+        window.copyRegisterLink = async () => {
+            const url = getRegisterPageUrl();
+            const btn = document.getElementById('copyRegisterBtn');
+
+            if (!url) {
+                alert("กรุณาเลือกรายการแข่งขันก่อน");
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(url);
+                const oldText = btn.innerText;
+                btn.innerText = "✅ คัดลอกแล้ว";
+                setTimeout(() => {
+                    btn.innerText = "🔗 คัดลอกลิงก์สมัคร";
+                }, 1800);
+            } catch (e) {
+                window.prompt("คัดลอกลิงก์นี้", url);
+            }
+        };
+
         async function loadCampaigns() {
             const select = document.getElementById('campaignSelect');
             try {
@@ -103,8 +182,10 @@ let unsubscribe = null;
                 querySnapshot.forEach((doc) => {
                     select.innerHTML += `<option value="${doc.id}">${doc.data().name}</option>`;
                 });
+                updateDashboardActions();
             } catch (error) {
                 console.error(error);
+                updateDashboardActions();
             }
         }
 
@@ -117,11 +198,13 @@ let unsubscribe = null;
             
             if (!cid) { 
                 updateDashboardHeadings();
+                updateDashboardActions();
                 stats.style.display = 'none'; content.style.display = 'none'; empty.style.display = 'block';
                 if(unsubscribe) unsubscribe(); return; 
             }
 
             updateDashboardHeadings(campaignName);
+            updateDashboardActions(cid, campaignName);
             stats.style.display = 'grid'; content.style.display = 'block'; empty.style.display = 'none';
             if (unsubscribe) unsubscribe();
 
