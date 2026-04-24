@@ -38,6 +38,20 @@
             padding: 8px;
             cursor: zoom-in;
         }
+        #imagePreviewModal {
+            z-index: 99999;
+        }
+        #previewModalImage {
+            max-width: min(92vw, 1100px);
+            max-height: 88vh;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            background: #0f1318;
+            padding: 10px;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+        }
         select { width: 100%; padding: 12px; background: #2a2a2a; border: 1px solid #444; border-radius: 8px; color: white; font-family: inherit; }
     </style>
 </head>
@@ -114,7 +128,7 @@
     </div>
 
     <div id="imagePreviewModal" class="img-modal">
-        <span class="close-modal" onclick="closeImagePreview()">&times;</span>
+        <span id="closeImagePreviewBtn" class="close-modal">&times;</span>
         <img class="img-modal-content" id="previewModalImage" alt="Expanded preview">
     </div>
 
@@ -143,12 +157,24 @@
             if (e.target.id === 'imagePreviewModal') window.closeImagePreview();
         });
 
+        document.getElementById('closeImagePreviewBtn').addEventListener('click', () => {
+            window.closeImagePreview();
+        });
+
         const bindExpandableImage = (id, src) => {
             const img = document.getElementById(id);
             if (!img || !src) return;
+
             img.src = src;
             img.style.display = 'block';
-            img.onclick = () => window.openImagePreview(src);
+            img.style.cursor = 'zoom-in';
+
+            if (!img.dataset.expandBound) {
+                img.addEventListener('click', () => {
+                    if (img.src) window.openImagePreview(img.src);
+                });
+                img.dataset.expandBound = 'true';
+            }
         };
 
         async function loadCampaign() {
