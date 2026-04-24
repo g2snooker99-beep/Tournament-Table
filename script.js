@@ -1,4 +1,3 @@
-
 // โหลด Canvas Confetti Library
 if (!document.getElementById('confetti-script')) {
     const script = document.createElement('script');
@@ -93,8 +92,7 @@ window.initBracket = (players, matches = {}, zoneIdx = 0) => {
     const visual = document.createElement('div'); visual.className = 'bracket-visual';
 
     if (zoneIdx === 99) {
-        
-        visual.style.transform = "scale(1.1)"; // ขยายจอให้ใหญ่ขึ้น
+        visual.style.transform = "scale(1.1)"; 
         visual.innerHTML = `
             <div class="side left-side" style="margin-right: 30px;">
                 <div class="round">
@@ -171,7 +169,7 @@ function createZoneRound(r, count, prefix, players, offset) {
 function createSlot(r, mKey, pIdx, players, offset) {
     const slot = document.createElement('div'); slot.className = 'player-slot';
     let name = "รอผล";
-    let prevKeyToClear = null; // 🔑 ตัวแปรใหม่สำหรับดึง Key ของรอบที่แล้วมาลบ
+    let prevKeyToClear = null; 
     
     if (r === 0) {
         const mIdx = parseInt(mKey.split('-M')[1]); name = players[offset + (mIdx * 2) + pIdx]?.name || "BYE";
@@ -192,11 +190,9 @@ function createSlot(r, mKey, pIdx, players, offset) {
             e.stopPropagation();
             if(confirm(`ต้องการยกเลิกผลของ "${name}" ใช่หรือไม่?`)) {
                 if (r === 0) {
-                    // ถ้ารอบแรก ลบที่ players array ตรงๆ
                     const mIdx = parseInt(mKey.split('-M')[1]);
                     window.currentPlayers[(window.currentZoneIdx * 32) + offset + (mIdx * 2) + pIdx] = { name: "BYE" };
                 } else {
-                    // 💥 ถ้ารอบ 2 ขึ้นไป ให้ลบจาก Key ของ "รอบก่อนหน้า" 💥
                     delete window.currentMatches[`match-${prevKeyToClear}`];
                 }
                 window.initBracket(window.currentPlayers, window.currentMatches, window.currentZoneIdx || 0);
@@ -239,19 +235,15 @@ window.selectGrandChamp = (name) => {
     window.currentMatches['grand-champion'] = name;
     window.initBracket(window.currentPlayers, window.currentMatches, 99);
     
-    // 💥 เริ่มความอลังการ 💥
     setTimeout(() => {
-        // 1. หน้าจอสั่น (Screen Shake)
         document.body.classList.add('shake-screen');
         setTimeout(() => document.body.classList.remove('shake-screen'), 600);
 
-        // 2. ยิงพลุจากมุมซ้ายและขวา (สีทอง, ขาว, ฟ้า G2)
         if (typeof confetti !== 'undefined') {
-            var duration = 10 * 1000; // ยิงต่อเนื่อง 10 วินาที
+            var duration = 10 * 1000;
             var end = Date.now() + duration;
 
             (function frame() {
-                // พลุฝั่งซ้าย
                 confetti({
                     particleCount: 7,
                     angle: 60,
@@ -260,7 +252,6 @@ window.selectGrandChamp = (name) => {
                     colors: ['#ffd700', '#ffffff', '#00d4ff'],
                     zIndex: 9999
                 });
-                // พลุฝั่งขวา
                 confetti({
                     particleCount: 7,
                     angle: 120,
@@ -343,6 +334,7 @@ window.resetTournamentData = async () => {
         }
     }
 };
+
 window.saveAndGoToBracket = async () => {
     const btn = document.getElementById('saveBtn');
     if (btn) btn.innerText = "⏳ บันทึก...";
@@ -380,17 +372,17 @@ window.saveAndGoToBracket = async () => {
             dId = dr.id;
         }
 
-        // 👇👇👇 ส่วนที่อัปเดตใหม่ เพื่อให้ลิงก์กดคลิกไปหน้าอื่นได้ 👇👇👇
         const base = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
         
-        // สร้างตัวแปรเก็บ URL
+        // ----------------------------------------------------
+        // ส่วนจัดการลิงก์ที่สามารถคลิกได้ (เด้งไปแท็บใหม่ทันที)
+        // ----------------------------------------------------
         const adminLink = `${base}bracket.html?id=${dId}`;
         const liveLink = `${base}live.html?id=${dId}`;
 
-        // ใส่ค่าให้แท็ก <a> ในหน้า Setup (ทั้งข้อความที่โชว์ และลิงก์ปลายทาง)
         if (document.getElementById('adminUrl')) {
             document.getElementById('adminUrl').innerText = adminLink;
-            document.getElementById('adminUrl').href = adminLink; 
+            document.getElementById('adminUrl').href = adminLink;
         }
         if (document.getElementById('liveUrl')) {
             document.getElementById('liveUrl').innerText = liveLink;
@@ -399,7 +391,6 @@ window.saveAndGoToBracket = async () => {
         if (document.getElementById('linkDisplayArea')) {
             document.getElementById('linkDisplayArea').style.display = 'block';
         }
-        // 👆👆👆 สิ้นสุดส่วนที่อัปเดต 👆👆👆
 
     } catch (e) {
         alert("❌ " + e.message);
