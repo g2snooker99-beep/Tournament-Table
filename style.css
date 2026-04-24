@@ -1059,3 +1059,143 @@ button[style*="#6f1d1b"] {
     font-weight: bold;
     text-align: center;
 }
+
+/* --- 🌟 อัปเกรดหน้า Live ถ่ายทอดสด ให้เต็มจอและอลังการ --- */
+body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100vw;
+    height: 100vh;
+    /* ซ่อนแถบสกอร์บาร์ให้เหมือนจอทีวี (ไม่มีแถบเลื่อน) */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    background: radial-gradient(circle at 50% 50%, #121824 0%, #020305 100%) !important;
+}
+body::-webkit-scrollbar {
+    display: none;
+}
+
+.live-container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 40px; /* เว้นที่ให้ป้ายชื่อรายการตรงกลาง */
+    box-sizing: border-box;
+}
+
+#bracketWrapper {
+    width: 96vw; /* กางออก 96% ของจอภาพ */
+    height: 88vh; /* กางความสูง 88% ของจอภาพ */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bracket-visual {
+    width: 100%;
+    display: flex;
+    justify-content: space-between !important; /* ดันสายซ้ายและขวาให้ชิดขอบจอ */
+    align-items: center;
+}
+
+/* ขยายออร่าตรงกลางให้เด่นขึ้น และดันขอบไม่ให้เบียดกัน */
+.champion-area {
+    min-width: 320px;
+    margin: 0 40px; 
+    transform: scale(1.15) !important; 
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.1) 0%, rgba(0, 0, 0, 0.4) 100%) !important;
+    border: 2px solid rgba(255, 215, 0, 0.25) !important;
+    box-shadow: 0 0 50px rgba(255, 215, 0, 0.15) !important;
+    border-radius: 20px;
+    padding: 40px 20px !important;
+    z-index: 10;
+}
+
+/* แต่งกล่องชื่อผู้เล่นให้ดูพรีเมียมขึ้น มีมิติแสงเงา */
+.player-slot {
+    background: rgba(20, 25, 35, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important;
+}
+.player-slot.waiting {
+    background: rgba(10, 10, 15, 0.4) !important;
+    border: 1px dashed rgba(255, 255, 255, 0.15) !important;
+}
+
+/* --- 🌟 อัปเกรดหน้า Live Final View ให้เต็มจอและอลังการ --- */
+/* ปรับปรุง Body และ Container หลักให้เป็นเต็มจออย่างสมบูรณ์ */
+body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100vw;
+    height: 100vh;
+    /* ซ่อนแถบสกอร์บาร์ทั้งหมด */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    background: radial-gradient(circle at 50% 50%, #121824 0%, #020305 100%) !important;
+    overflow: hidden; /* บังคับไม่ให้มีสกรอลบาร์ */
+}
+body::-webkit-scrollbar {
+    display: none;
+}
+
+.live-container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 40px;
+    box-sizing: border-box;
+}
+
+/* แก้ปัญหา bunching (CONTENT กระจุก) กาง content ออกเต็มจอภาพ */
+#bracketWrapper {
+    width: 96vw;
+    height: 88vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* บังคับให้ content ด้านในกางออกซ้ายสุด-ขวาสุด */
+.bracket-visual {
+    width: 100%;
+    display: flex;
+    justify-content: space-between !important;
+    align-items: center;
+}
+
+/* อัปเกรดความอลังการของ Champion Area ตรงกลาง */
+.champion-area {
+    min-width: 360px !important; /* ขยายความกว้างช่องตรงกลาง */
+    margin: 0 50px !important; /* เพิ่มช่องไฟไม่ให้เบียดกัน */
+    transform: scale(1.2) !important; /* ขยายขนาดเพิ่มความยิ่งใหญ่ */
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.18) 0%, rgba(0, 0, 0, 0.5) 100%) !important; /* เพิ่มสีทองใน gradient */
+    border: 3px solid rgba(255, 215, 0, 0.35) !important; /* เส้นขอบทองหนาขึ้นและชัดขึ้น */
+    box-shadow: 0 0 60px rgba(255, 215, 0, 0.18) !important; /* เพิ่มเงาเรืองแสง */
+    border-radius: 24px; /* โค้งมนมากขึ้น */
+    padding: 45px 25px !important; /* เพิ่มพื้นที่ */
+    z-index: 10;
+}
+
+/* เพิ่มแสงเรืองแสงพิเศษให้กับข้อความตรงกลาง */
+.grand-champion-name span.slot-name {
+    font-size: 4.5em !important;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 10px rgba(255, 215, 0, 0.5); /* เอฟเฟกต์ตัวอักษรเรืองแสงสีทอง */
+}
+
+/* ปรับปรุงกล่องชื่อผู้เล่นให้ดูพรีเมียมขึ้น มีแสงเงา */
+.player-slot {
+    background: rgba(20, 25, 35, 0.85) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.6) !important;
+    border-radius: 10px;
+}
+.player-slot.waiting {
+    background: rgba(10, 10, 15, 0.5) !important;
+    border: 1px dashed rgba(255, 255, 255, 0.2) !important;
+}
