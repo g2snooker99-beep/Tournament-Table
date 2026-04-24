@@ -167,7 +167,7 @@
                         window.initBracket(window.currentPlayers, window.currentMatches, zonesSequence[zoneIdx]);
                         if (isAutoPlay) startAutoPlay();
                         updateLiveHeader(window.currentTournamentName);
-python3 -m http.server 5500                        window.initialRender = true;
+                        window.initialRender = true; // ✅ แก้ไขแล้ว เอาบรรทัดที่แปลกปลอมออก
                     } else {
                         // อัปเดตข้อมูลสดๆ โดยไม่เปลี่ยนหน้าจอที่ล็อคไว้
                         window.initBracket(window.currentPlayers, window.currentMatches, zonesSequence[zoneIdx]);
