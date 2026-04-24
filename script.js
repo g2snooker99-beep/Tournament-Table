@@ -276,25 +276,98 @@ function createFinalWinnerSlot(id1, id2) {
     return `<div class="player-slot ${!s1?'waiting':''}" style="padding: 25px; font-size: 1.8em; margin-bottom: 20px;" onclick="if(isAdmin() && '${s1||""}') selectGrandChamp('${s1}')">${html1}</div><div class="player-slot ${!s2?'waiting':''}" style="padding: 25px; font-size: 1.8em;" onclick="if(isAdmin() && '${s2||""}') selectGrandChamp('${s2}')">${html2}</div>`;
 }
 
-window.resetTournamentData = async () => { /* (คงฟังก์ชันล้างข้อมูลไว้) */ };
+window.resetTournamentData = async () => {
+    const cid = document.getElementById('campaignSelectSetup')?.value;
+    if (!cid) {
+        alert("กรุณาเลือกรายการแข่งขันก่อน");
+        return;
+    }
+
+    if (!confirm("ต้องการล้างผลการแข่งขันทั้งหมดและเริ่มใหม่ใช่หรือไม่?")) return;
+
+    const btn = document.getElementById('resetTourneyBtn');
+    const originalText = btn?.innerText;
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = "⏳ กำลังล้างผลการแข่งขัน...";
+    }
+
+    try {
+        const { db, collection, query, where, getDocs, updateDoc, doc } = window.dbFunctions;
+        const q = query(collection(db, "tournaments"), where("campaignId", "==", cid));
+        const snap = await getDocs(q);
+
+        if (snap.empty) {
+            alert("ยังไม่มีข้อมูลสายการแข่งขันให้ล้าง");
+            return;
+        }
+
+        const tourneyDoc = snap.docs[0];
+        await updateDoc(doc(db, "tournaments", tourneyDoc.id), {
+            matches: {},
+            updatedAt: new Date()
+        });
+
+        window.currentMatches = {};
+        alert("✅ ล้างผลการแข่งขันเรียบร้อย");
+
+        if (typeof window.checkExistingSetup === "function") {
+            await window.checkExistingSetup();
+        }
+    } catch (e) {
+        alert("❌ " + e.message);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = originalText || "🗑️ ล้างผลการแข่งทั้งหมด (Reset เริ่มใหม่)";
+        }
+    }
+};
 window.saveAndGoToBracket = async () => {
-    const btn = document.getElementById('saveBtn'); if(btn) btn.innerText = "⏳ บันทึก...";
-    const players = Array.from(document.querySelectorAll('.playerName')).map(i => ({ name: i.value.trim() }));
-    const cid = document.getElementById('campaignSelectSetup')?.value || "manual";
+    const btn = document.getElementById('saveBtn');
+    if (btn) btn.innerText = "⏳ บันทึก...";
+
+    const players = Array.from(document.querySelectorAll('.playerName')).map(i => ({
+        name: i.value.trim()
+    }));
+
+    const campaignSelect = document.getElementById('campaignSelectSetup');
+    const cid = campaignSelect?.value || "manual";
+    const campaignName = campaignSelect?.selectedOptions?.[0]?.text?.trim() || "Manual Tournament";
+
     try {
         const { db, collection, addDoc, query, where, getDocs, updateDoc, doc } = window.dbFunctions;
         const q = query(collection(db, "tournaments"), where("campaignId", "==", cid));
         const snap = await getDocs(q);
+
         let dId;
         if (!snap.empty) {
-            dId = snap.docs[0].id; await updateDoc(doc(db, "tournaments", dId), { players, updatedAt: new Date() });
+            dId = snap.docs[0].id;
+            await updateDoc(doc(db, "tournaments", dId), {
+                players,
+                campaignName,
+                updatedAt: new Date()
+            });
         } else {
-            const dr = await addDoc(collection(db, "tournaments"), { players, campaignId: cid, createdAt: new Date(), updatedAt: new Date(), matches: {} }); dId = dr.id;
+            const dr = await addDoc(collection(db, "tournaments"), {
+                players,
+                campaignId: cid,
+                campaignName,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                matches: {}
+            });
+            dId = dr.id;
         }
+
         const base = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
-        if(document.getElementById('adminUrl')) document.getElementById('adminUrl').innerText = `${base}bracket.html?id=${dId}`;
-        if(document.getElementById('liveUrl')) document.getElementById('liveUrl').innerText = `${base}live.html?id=${dId}`;
-        if(document.getElementById('linkDisplayArea')) document.getElementById('linkDisplayArea').style.display = 'block';
-    } catch (e) { alert("❌ " + e.message); }
-    if(btn) btn.innerText = "💾 บันทึกสายการแข่งขัน";
+        if (document.getElementById('adminUrl')) document.getElementById('adminUrl').innerText = `${base}bracket.html?id=${dId}`;
+        if (document.getElementById('liveUrl')) document.getElementById('liveUrl').innerText = `${base}live.html?id=${dId}`;
+        if (document.getElementById('linkDisplayArea')) document.getElementById('linkDisplayArea').style.display = 'block';
+    } catch (e) {
+        alert("❌ " + e.message);
+    }
+
+    if (btn) btn.innerText = "💾 บันทึกสายการแข่งขัน";
 };
