@@ -999,3 +999,63 @@ button[style*="#6f1d1b"] {
     display: flex !important;
     flex-direction: row-reverse !important;
 }
+
+/* --- 🎲 เอฟเฟกต์สุ่มสายแข่งขัน --- */
+@keyframes shufflePulse {
+    0% { transform: scale(1); border-color: #f39c12; }
+    50% { transform: scale(1.02); border-color: #00d4ff; box-shadow: 0 0 15px #00d4ff; }
+    100% { transform: scale(1); border-color: #f39c12; }
+}
+.is-shuffling {
+    animation: shufflePulse 0.15s infinite;
+    pointer-events: none;
+    background: rgba(0, 212, 255, 0.1) !important;
+    color: #fff !important;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* --- 🎲 เอฟเฟกต์สุ่มสายแข่งขัน --- */
+@keyframes shufflePulse {
+    0% { transform: scale(1); border-color: #f39c12; }
+    50% { transform: scale(1.02); border-color: #00d4ff; box-shadow: 0 0 15px #00d4ff; }
+    100% { transform: scale(1); border-color: #f39c12; }
+}
+.is-shuffling {
+    animation: shufflePulse 0.15s infinite;
+    pointer-events: none;
+    background: rgba(0, 212, 255, 0.1) !important;
+    color: #fff !important;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* --- 🎲 เอฟเฟกต์สุ่มสายแข่งขัน --- */
+@keyframes shufflePulse {
+    0% { transform: scale(1); border-color: #f39c12; }
+    50% { transform: scale(1.02); border-color: #00d4ff; box-shadow: 0 0 15px #00d4ff; }
+    100% { transform: scale(1); border-color: #f39c12; }
+}
+.is-shuffling {
+    animation: shufflePulse 0.15s infinite;
+    pointer-events: none;
+    background: rgba(0, 212, 255, 0.1) !important;
+    color: #fff !important;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* --- 🎲 เอฟเฟกต์สุ่มสายแข่งขัน --- */
+@keyframes shufflePulse {
+    0% { transform: scale(1); border-color: #f39c12; }
+    50% { transform: scale(1.02); border-color: #00d4ff; box-shadow: 0 0 15px #00d4ff; }
+    100% { transform: scale(1); border-color: #f39c12; }
+}
+.is-shuffling {
+    animation: shufflePulse 0.15s infinite;
+    pointer-events: none;
+    background: rgba(0, 212, 255, 0.1) !important;
+    color: #fff !important;
+    font-weight: bold;
+    text-align: center;
+}

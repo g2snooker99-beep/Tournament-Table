@@ -77,11 +77,73 @@ window.bulkPaste = () => {
     names.forEach((name, i) => { if(inputs[i]) inputs[i].value = name; });
 };
 
+// 🎲 อัปเดตฟังก์ชันสุ่มรายชื่อแบบมีแอนิเมชันลุ้นระทึก
 window.shuffleInputs = () => {
     const inputs = Array.from(document.querySelectorAll('.playerName'));
-    const vals = inputs.map(i => i.value);
-    for (let i = vals.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [vals[i], vals[j]] = [vals[j], vals[i]]; }
-    inputs.forEach((input, i) => { input.value = vals[i]; });
+    const originalVals = inputs.map(i => i.value);
+    
+    // สร้าง Array ที่สุ่มผลลัพธ์สุดท้ายรอไว้เลย
+    let finalVals = [...originalVals];
+    for (let i = finalVals.length - 1; i > 0; i--) { 
+        const j = Math.floor(Math.random() * (i + 1)); 
+        [finalVals[i], finalVals[j]] = [finalVals[j], finalVals[i]]; 
+    }
+
+    // ล็อกปุ่มอื่นๆ ป้องกันคนกดซ้ำตอนกำลังสุ่ม
+    const allButtons = document.querySelectorAll('button');
+    allButtons.forEach(btn => btn.style.pointerEvents = 'none');
+
+    // ใส่คลาสแอนิเมชันให้ทุกช่อง
+    inputs.forEach(input => input.classList.add('is-shuffling'));
+
+    let shufflesCount = 0;
+    const maxShuffles = 20; // จำนวนรอบที่สลับหลอก
+    const speed = 100; // ความเร็วกะพริบ (ms)
+
+    // เริ่มการสลับหลอก (รัวๆ)
+    const shuffleInterval = setInterval(() => {
+        let tempVals = [...originalVals];
+        for (let i = tempVals.length - 1; i > 0; i--) { 
+            const j = Math.floor(Math.random() * (i + 1)); 
+            [tempVals[i], tempVals[j]] = [tempVals[j], tempVals[i]]; 
+        }
+        
+        inputs.forEach((input, i) => { 
+            input.value = tempVals[i];
+        });
+
+        shufflesCount++;
+
+        // เมื่อสลับครบกำหนด ให้หยุดและแสดงผลจริง
+        if (shufflesCount >= maxShuffles) {
+            clearInterval(shuffleInterval);
+            
+            inputs.forEach((input, i) => { 
+                input.value = finalVals[i]; // ใส่ผลจริง
+                input.classList.remove('is-shuffling');
+                
+                // เอฟเฟกต์สีเขียวตอนหยุด
+                input.style.boxShadow = '0 0 15px var(--status-success)';
+                input.style.borderColor = 'var(--status-success)';
+                input.style.background = 'rgba(40, 167, 69, 0.1)';
+                
+                // คืนค่าสีเดิมหลังผ่านไป 1.5 วิ
+                setTimeout(() => {
+                    input.style.boxShadow = '';
+                    input.style.borderColor = '';
+                    input.style.background = '';
+                }, 1500);
+            });
+
+            // ปลดล็อกปุ่ม
+            allButtons.forEach(btn => btn.style.pointerEvents = 'auto');
+
+            // จุดพลุฉลองเบาๆ
+            if (typeof confetti !== 'undefined') {
+                confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 }, zIndex: 9999 });
+            }
+        }
+    }, speed);
 };
 
 window.isAdmin = () => window.location.pathname.includes('bracket.html');
@@ -374,9 +436,6 @@ window.saveAndGoToBracket = async () => {
 
         const base = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
         
-        // ----------------------------------------------------
-        // ส่วนจัดการลิงก์ที่สามารถคลิกได้ (เด้งไปแท็บใหม่ทันที)
-        // ----------------------------------------------------
         const adminLink = `${base}bracket.html?id=${dId}`;
         const liveLink = `${base}live.html?id=${dId}`;
 
