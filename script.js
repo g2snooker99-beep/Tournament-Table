@@ -380,10 +380,27 @@ window.saveAndGoToBracket = async () => {
             dId = dr.id;
         }
 
+        // 👇👇👇 ส่วนที่อัปเดตใหม่ เพื่อให้ลิงก์กดคลิกไปหน้าอื่นได้ 👇👇👇
         const base = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
-        if (document.getElementById('adminUrl')) document.getElementById('adminUrl').innerText = `${base}bracket.html?id=${dId}`;
-        if (document.getElementById('liveUrl')) document.getElementById('liveUrl').innerText = `${base}live.html?id=${dId}`;
-        if (document.getElementById('linkDisplayArea')) document.getElementById('linkDisplayArea').style.display = 'block';
+        
+        // สร้างตัวแปรเก็บ URL
+        const adminLink = `${base}bracket.html?id=${dId}`;
+        const liveLink = `${base}live.html?id=${dId}`;
+
+        // ใส่ค่าให้แท็ก <a> ในหน้า Setup (ทั้งข้อความที่โชว์ และลิงก์ปลายทาง)
+        if (document.getElementById('adminUrl')) {
+            document.getElementById('adminUrl').innerText = adminLink;
+            document.getElementById('adminUrl').href = adminLink; 
+        }
+        if (document.getElementById('liveUrl')) {
+            document.getElementById('liveUrl').innerText = liveLink;
+            document.getElementById('liveUrl').href = liveLink;
+        }
+        if (document.getElementById('linkDisplayArea')) {
+            document.getElementById('linkDisplayArea').style.display = 'block';
+        }
+        // 👆👆👆 สิ้นสุดส่วนที่อัปเดต 👆👆👆
+
     } catch (e) {
         alert("❌ " + e.message);
     }
