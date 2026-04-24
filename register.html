@@ -39,9 +39,26 @@
             cursor: zoom-in;
         }
         #imagePreviewModal {
+            display: none;
+            position: fixed !important;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            padding: 24px;
             z-index: 99999;
+            background: rgba(5, 8, 12, 0.88);
+            backdrop-filter: blur(10px);
+            align-items: center;
+            justify-content: center;
+        }
+        #imagePreviewModal.open {
+            display: flex;
         }
         #previewModalImage {
+            display: block;
+            position: static !important;
+            transform: none !important;
+            margin: 0 auto;
             max-width: min(92vw, 1100px);
             max-height: 88vh;
             width: auto;
@@ -141,12 +158,17 @@
 
         window.openImagePreview = (src) => {
             if (!src) return;
-            document.getElementById('imagePreviewModal').style.display = 'block';
-            document.getElementById('previewModalImage').src = src;
+            const modal = document.getElementById('imagePreviewModal');
+            const image = document.getElementById('previewModalImage');
+            image.src = src;
+            modal.classList.add('open');
+            document.body.style.overflow = 'hidden';
         };
 
         window.closeImagePreview = () => {
-            document.getElementById('imagePreviewModal').style.display = 'none';
+            const modal = document.getElementById('imagePreviewModal');
+            modal.classList.remove('open');
+            document.body.style.overflow = '';
         };
 
         document.addEventListener('keydown', (e) => {

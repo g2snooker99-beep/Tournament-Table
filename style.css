@@ -988,3 +988,14 @@ button[style*="#6f1d1b"] {
         grid-column: auto;
     }
 }
+
+/* --- 🛠️ แก้ไขเลย์เอาต์ ป้ายทับสายแข่ง & สายฝั่งขวาสลับด้าน --- */
+.live-header {
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    text-align: center !important;
+}
+.right-side {
+    display: flex !important;
+    flex-direction: row-reverse !important;
+}
