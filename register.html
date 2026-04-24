@@ -7,10 +7,37 @@
     <link rel="stylesheet" href="style.css?v=grandlux">
     <style>
         .campaign-header { text-align: center; margin-bottom: 30px; }
-        .campaign-banner { max-width: 100%; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .campaign-banner {
+            display: none;
+            width: min(100%, 420px);
+            max-height: 220px;
+            object-fit: contain;
+            margin: 0 auto 20px;
+            padding: 12px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.03);
+            box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+            cursor: zoom-in;
+        }
         .info-box { background: #252525; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #00d4ff; text-align: left;}
-        .jersey-preview { max-width: 250px; display: block; margin: 10px auto; border-radius: 8px; }
-        .size-chart-preview { max-width: 100%; display: block; margin: 10px auto; border-radius: 8px; background:#111; }
+        .jersey-preview {
+            max-width: min(100%, 280px);
+            display: none;
+            margin: 10px auto;
+            border-radius: 12px;
+            background:#111;
+            padding: 8px;
+            cursor: zoom-in;
+        }
+        .size-chart-preview {
+            max-width: 100%;
+            display: block;
+            margin: 10px auto;
+            border-radius: 12px;
+            background:#111;
+            padding: 8px;
+            cursor: zoom-in;
+        }
         select { width: 100%; padding: 12px; background: #2a2a2a; border: 1px solid #444; border-radius: 8px; color: white; font-family: inherit; }
     </style>
 </head>
@@ -27,6 +54,11 @@
                     <p id="cRules" style="white-space: pre-line; color:#ddd; line-height: 1.6;"></p>
                     <hr style="border-color:#444; margin: 15px 0;">
                     <p style="font-size: 1.2em; margin:0;">💵 ค่าสมัคร: <strong id="cFee" style="color:#f39c12; font-size: 1.4em;"></strong> บาท</p>
+                    <div id="prizeWrap" style="display:none; margin-top:15px;">
+                        <hr style="border-color:#444; margin: 15px 0;">
+                        <p style="font-size: 1.08em; margin:0 0 8px 0;">🏆 รางวัลการแข่งขัน</p>
+                        <p id="cPrize" style="white-space: pre-line; color:#ffd76a; line-height: 1.7; margin:0;"></p>
+                    </div>
                 </div>
             </div>
 
@@ -56,7 +88,11 @@
                             <option value="M">M</option>
                             <option value="L">L</option>
                             <option value="XL">XL</option>
-                            <option value="XXL">XXL</option>
+                            <option value="XXL">2XL</option>
+                            <option value="3XL">3XL</option>
+                            <option value="4XL">4XL</option>
+                            <option value="5XL">5XL</option>
+                            <option value="6XL">6XL</option>
                         </select>
                     </div>
 
@@ -77,12 +113,43 @@
         </div>
     </div>
 
+    <div id="imagePreviewModal" class="img-modal">
+        <span class="close-modal" onclick="closeImagePreview()">&times;</span>
+        <img class="img-modal-content" id="previewModalImage" alt="Expanded preview">
+    </div>
+
     <script type="module">
         import { db, doc, getDoc, getDocs, query, where, collection, addDoc } from "./firebase-config.js";
 
 // ดึง ID แคมเปญจาก URL
         const urlParams = new URLSearchParams(window.location.search);
         const campaignId = urlParams.get('campaign');
+
+        window.openImagePreview = (src) => {
+            if (!src) return;
+            document.getElementById('imagePreviewModal').style.display = 'block';
+            document.getElementById('previewModalImage').src = src;
+        };
+
+        window.closeImagePreview = () => {
+            document.getElementById('imagePreviewModal').style.display = 'none';
+        };
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') window.closeImagePreview();
+        });
+
+        document.getElementById('imagePreviewModal').addEventListener('click', (e) => {
+            if (e.target.id === 'imagePreviewModal') window.closeImagePreview();
+        });
+
+        const bindExpandableImage = (id, src) => {
+            const img = document.getElementById(id);
+            if (!img || !src) return;
+            img.src = src;
+            img.style.display = 'block';
+            img.onclick = () => window.openImagePreview(src);
+        };
 
         async function loadCampaign() {
             if (!campaignId) {
@@ -98,25 +165,30 @@
                     document.getElementById('cName').innerText = data.name;
                     document.getElementById('cRules').innerText = data.rules;
                     document.getElementById('cFee').innerText = data.fee;
+
+                    const prizeText = (data.prize || "").trim();
+                    if (prizeText) {
+                        document.getElementById('prizeWrap').style.display = 'block';
+                        document.getElementById('cPrize').innerText = prizeText;
+                    } else {
+                        document.getElementById('prizeWrap').style.display = 'none';
+                    }
                     
                     // โชว์แบนเนอร์ ถ้าแอดมินอัปโหลดไว้
                     if (data.bannerImg) {
-                        const banner = document.getElementById('bannerImg');
-                        banner.src = data.bannerImg;
-                        banner.style.display = 'block';
+                        bindExpandableImage('bannerImg', data.bannerImg);
                     }
+
                     // โชว์ข้อมูลเสื้อและตารางไซส์ ถ้าแอดมินอัปโหลดไว้
                     if (data.jerseyImg || data.sizeChartImg) {
                         document.getElementById('jerseySection').style.display = 'block';
                     }
                     if (data.jerseyImg) {
-                        const jerseyImg = document.getElementById('jerseyImg');
-                        jerseyImg.src = data.jerseyImg;
-                        jerseyImg.style.display = 'block';
+                        bindExpandableImage('jerseyImg', data.jerseyImg);
                     }
                     if (data.sizeChartImg) {
                         document.getElementById('sizeChartWrap').style.display = 'block';
-                        document.getElementById('sizeChartImg').src = data.sizeChartImg;
+                        bindExpandableImage('sizeChartImg', data.sizeChartImg);
                     }
 
                     document.getElementById('loading').style.display = 'none';

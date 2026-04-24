@@ -135,6 +135,8 @@
         window.dbFunctions = { db, collection, addDoc, getDoc, getDocs, updateDoc, doc, query, where, onSnapshot };
 
         let currentCampaignData = null;
+        const urlParams = new URLSearchParams(window.location.search);
+        const preselectedCampaignId = urlParams.get('campaign');
 
         const fileToBase64 = (file) => new Promise((resolve, reject) => {
             if (!file) return resolve(null);
@@ -488,6 +490,14 @@
 
         window.onload = async () => {
             await loadCampaigns();
+
+            const select = document.getElementById('campaignSelectSetup');
+            if (preselectedCampaignId && Array.from(select.options).some((option) => option.value === preselectedCampaignId)) {
+                select.value = preselectedCampaignId;
+                await window.checkExistingSetup();
+                return;
+            }
+
             updateSetupHeading();
         };
     </script>
