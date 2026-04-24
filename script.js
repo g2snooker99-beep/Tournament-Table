@@ -14,7 +14,7 @@ window.generateInputFields = () => {
     container.innerHTML = `
         <div style="display:flex; justify-content:space-between; margin-bottom:15px; align-items:center; background:rgba(0,0,0,0.3); padding:10px; border-radius:10px; border:1px dashed #555;">
             <div style="display:flex; gap:10px;">
-                <button onclick="fillTestData()" style="background:linear-gradient(135deg, #f39c12 0%, #d68910 100%); color:#000; padding:8px 20px; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">🤖 เติมชื่อทดสอบ</button>
+                <button onclick="fillTestData()" style="background:linear-gradient(135deg, #f39c12 0%, #d68910 100%); color:#000; padding:8px 20px; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">🤖 เติมชื่อทดสอบลงช่องว่าง</button>
                 <button onclick="bulkPaste()" style="background:var(--status-success); color:white; padding:8px 20px; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">📋 วางรายชื่อ</button>
             </div>
         </div>
@@ -42,12 +42,31 @@ window.generateInputFields = () => {
 };
 
 window.fillTestData = () => {
-    const inputs = document.querySelectorAll('.playerName');
-    if(inputs.length === 0) return;
-    inputs.forEach((input, index) => {
-        input.value = `P-${index + 1}`;
+    const inputs = Array.from(document.querySelectorAll('.playerName'));
+    if (inputs.length === 0) return;
+
+    const emptyInputs = inputs.filter((input) => !input.value.trim());
+    if (emptyInputs.length === 0) {
+        alert("ไม่มีช่องว่างให้เติมชื่อทดสอบแล้ว");
+        return;
+    }
+
+    const existingNames = new Set(
+        inputs.map((input) => input.value.trim().toLowerCase()).filter(Boolean)
+    );
+
+    let nextNumber = 1;
+    emptyInputs.forEach((input) => {
+        while (existingNames.has(`p-${nextNumber}`)) {
+            nextNumber++;
+        }
+
+        const testName = `P-${nextNumber}`;
+        input.value = testName;
+        existingNames.add(testName.toLowerCase());
         input.style.borderColor = "var(--gold)";
         setTimeout(() => { input.style.borderColor = "transparent"; }, 800);
+        nextNumber++;
     });
 };
 
