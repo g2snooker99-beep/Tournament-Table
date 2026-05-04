@@ -2,356 +2,1085 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Tournament-Table | สมัครแข่งขัน</title>
     <link rel="stylesheet" href="style.css?v=grandlux">
     <style>
-        .campaign-header { text-align: center; margin-bottom: 30px; }
+        /* ===== REGISTER PAGE OVERRIDES ===== */
+        body {
+            overflow-y: auto !important;
+            height: auto !important;
+            min-height: 100vh !important;
+        }
+
+        /* ===== CAMPAIGN HEADER ===== */
         .campaign-banner {
             display: none;
-            width: min(100%, 420px);
-            max-height: 220px;
+            width: min(100%, 460px);
+            max-height: 240px;
             object-fit: contain;
-            margin: 0 auto 20px;
-            padding: 12px;
-            border-radius: 16px;
+            margin: 0 auto 24px;
+            border-radius: 20px;
             background: rgba(255,255,255,0.03);
-            box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.4);
             cursor: zoom-in;
+            transition: transform 0.2s;
         }
-        .info-box { background: #252525; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #00d4ff; text-align: left;}
-        .jersey-preview {
-            max-width: min(100%, 280px);
-            display: none;
-            margin: 10px auto;
-            border-radius: 12px;
-            background:#111;
-            padding: 8px;
-            cursor: zoom-in;
-        }
-        .size-chart-preview {
-            max-width: 100%;
-            display: block;
-            margin: 10px auto;
-            border-radius: 12px;
-            background:#111;
-            padding: 8px;
-            cursor: zoom-in;
-        }
-        
-        /* 🛠️ แก้ไขส่วนของ Modal แสดงรูปภาพ 🛠️ */
-        #imagePreviewModal {
-            display: none;
-            position: relative;
-            top: 0; left: 0; right: 0; bottom: 0;
-            width: 100vw;
-            min-height: 100vh;
-            z-index: 99999;
-            background: rgba(5, 8, 12, 0.95); /* พื้นหลังเข้มขึ้นนิดนึงให้รูปเด่น */
-            backdrop-filter: blur(10px);
-            align-items: center;
-            justify-content: center;
-        }
-        #imagePreviewModal.open {
-            display: flex !important;
-        }
-        
-        /* 🛠️ ล็อกตำแหน่งปุ่มปิดให้อยู่มุมขวาบนเสมอ 🛠️ */
-        #closeImagePreviewBtn {
-            position: absolute;
-            top: 20px;
-            right: 30px;
-            font-size: 35px;
-            font-weight: bold;
-            color: #fff;
-            cursor: pointer;
-            z-index: 100000;
-            background: rgba(255,255,255,0.1);
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
+        .campaign-banner:hover { transform: scale(1.01); }
+
+        /* ===== STEP WIZARD ===== */
+        .step-wizard {
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: 0.2s;
+            gap: 0;
+            margin: 0 auto 32px;
+            max-width: 500px;
         }
-        #closeImagePreviewBtn:hover {
-            background: #dc3545; /* เปลี่ยนเป็นสีแดงตอนเอาเมาส์ชี้ */
-        }
-        
-        #previewModalImage {
-            display: block;
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
             position: relative;
+            flex: 1;
+        }
+        .step-circle {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #667;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 2;
+        }
+        .step-circle.done {
+            background: rgba(130,239,231,0.15);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .step-circle.active {
+            background: linear-gradient(135deg, var(--gold), var(--accent));
+            border-color: transparent;
+            color: #0f1318;
+            box-shadow: 0 0 0 6px rgba(130,239,231,0.12), 0 8px 24px rgba(130,239,231,0.2);
+            transform: scale(1.08);
+        }
+        .step-label {
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            text-align: center;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            line-height: 1.3;
+            white-space: nowrap;
+        }
+        .step-label.active { color: var(--accent); }
+        .step-label.done { color: var(--accent); opacity: 0.7; }
+        .step-connector {
+            flex: 1;
+            height: 2px;
+            background: rgba(255,255,255,0.1);
+            margin-top: -22px;
+            position: relative;
+            z-index: 1;
+        }
+        .step-connector.done { background: var(--accent); }
+
+        /* ===== FORM STEPS ===== */
+        .form-step {
+            display: none;
+            animation: stepIn 0.3s ease;
+        }
+        .form-step.active { display: block; }
+        @keyframes stepIn {
+            from { opacity: 0; transform: translateX(16px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .step-back { animation-name: stepBack; }
+        @keyframes stepBack {
+            from { opacity: 0; transform: translateX(-16px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* ===== FORM ELEMENTS ===== */
+        .field-wrap {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .field-wrap label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            color: var(--gold);
+            font-size: 0.82rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+        .field-wrap label .required-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--ember);
+            flex-shrink: 0;
+        }
+        .field-wrap input,
+        .field-wrap textarea,
+        .field-wrap select {
+            width: 100%;
+            padding: 14px 16px;
+            color: var(--text-main);
+            font: inherit;
+            background: rgba(255,255,255,0.04);
+            border: 1.5px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            outline: none;
+            transition: all 0.25s ease;
+            box-sizing: border-box;
+        }
+        .field-wrap input:focus,
+        .field-wrap textarea:focus,
+        .field-wrap select:focus {
+            border-color: rgba(130,239,231,0.5);
+            background: rgba(255,255,255,0.06);
+            box-shadow: 0 0 0 4px rgba(130,239,231,0.08);
+        }
+        .field-wrap input.valid { border-color: rgba(142,247,166,0.5); }
+        .field-wrap input.invalid { border-color: rgba(255,125,115,0.6); }
+        .field-hint {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            margin-top: 6px;
+            color: var(--text-dim);
+            min-height: 18px;
+        }
+        .field-hint.error { color: var(--status-danger); }
+        .field-hint.success { color: var(--status-success); }
+        .char-count {
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            text-align: right;
+            margin-top: 4px;
+        }
+        .char-count.warn { color: var(--status-pending); }
+
+        /* ===== JERSEY CARD ===== */
+        .jersey-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px dashed rgba(255,255,255,0.12);
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .jersey-card-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--accent);
+            font-size: 0.88rem;
+            font-weight: 700;
+            margin-bottom: 14px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .jersey-images-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .jersey-image-box {
+            border-radius: 12px;
+            overflow: hidden;
+            background: rgba(0,0,0,0.3);
+            cursor: zoom-in;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .jersey-image-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.2s;
+        }
+        .jersey-image-box:hover img { transform: scale(1.03); }
+        .jersey-image-box.full-width { grid-column: 1 / -1; aspect-ratio: 2/1; }
+
+        /* ===== SLIP UPLOAD ===== */
+        .slip-upload-area {
+            border: 2px dashed rgba(255,255,255,0.15);
+            border-radius: 16px;
+            padding: 28px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(255,255,255,0.02);
+            position: relative;
+        }
+        .slip-upload-area:hover,
+        .slip-upload-area.drag-over {
+            border-color: var(--accent);
+            background: rgba(130,239,231,0.05);
+        }
+        .slip-upload-area input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+        .slip-upload-icon { font-size: 2.5rem; margin-bottom: 10px; }
+        .slip-upload-text { color: var(--text-dim); font-size: 0.9rem; }
+        .slip-upload-text strong { color: var(--accent); }
+        .slip-preview-box {
+            display: none;
+            margin-top: 16px;
+            border-radius: 14px;
+            overflow: hidden;
+            background: rgba(0,0,0,0.3);
+            position: relative;
+            cursor: zoom-in;
+        }
+        .slip-preview-box img {
+            width: 100%;
+            max-height: 220px;
+            object-fit: cover;
+            display: block;
+        }
+        .slip-preview-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .slip-remove-btn {
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+        }
+        .slip-remove-btn:hover { background: rgba(220,53,69,0.8); }
+
+        /* ===== CONFIRM CARD ===== */
+        .confirm-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 18px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+        .confirm-card-header {
+            padding: 14px 20px;
+            background: rgba(130,239,231,0.06);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .confirm-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            gap: 12px;
+        }
+        .confirm-row:last-child { border-bottom: none; }
+        .confirm-key {
+            font-size: 0.82rem;
+            color: var(--text-dim);
+            flex-shrink: 0;
+        }
+        .confirm-val {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--text-main);
+            text-align: right;
+        }
+        .confirm-slip-preview {
+            width: 100%;
+            max-height: 180px;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* ===== NAV BUTTONS ===== */
+        .step-nav {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .btn-next {
+            flex: 1;
+            padding: 16px;
+            border-radius: 14px;
+            border: none;
+            background: linear-gradient(135deg, var(--gold), #ffe7a8, var(--accent));
+            color: #0f1318;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .btn-next:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(130,239,231,0.2); }
+        .btn-next:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-prev {
+            padding: 16px 20px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.05);
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .btn-prev:hover { background: rgba(255,255,255,0.1); }
+        .btn-submit {
+            flex: 1;
+            padding: 18px;
+            border-radius: 14px;
+            border: none;
+            background: linear-gradient(135deg, var(--status-success), #2ecc71);
+            color: #0f1318;
+            font-weight: 700;
+            font-size: 1.05rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(142,247,166,0.3); }
+        .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* ===== INFO BOX ===== */
+        .info-block {
+            background: rgba(255,255,255,0.03);
+            border-left: 4px solid var(--gold);
+            border-radius: 0 14px 14px 0;
+            padding: 18px 20px;
+            margin-bottom: 24px;
+        }
+        .info-block h4 { margin: 0 0 10px; color: var(--gold); font-size: 0.9rem; }
+        .info-block p { margin: 5px 0; color: var(--text-soft); font-size: 0.9rem; line-height: 1.6; }
+        .info-block .fee-big { color: #f39c12; font-size: 1.5rem; font-weight: 700; }
+
+        /* ===== SUCCESS ===== */
+        #successView {
+            display: none;
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .success-icon {
+            font-size: 5rem;
+            display: block;
+            margin-bottom: 20px;
+            animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0); opacity: 0; }
+            60% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .success-name-badge {
+            display: inline-block;
+            background: rgba(142,247,166,0.12);
+            border: 1px solid rgba(142,247,166,0.3);
+            color: var(--status-success);
+            padding: 8px 24px;
+            border-radius: 999px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 16px 0;
+        }
+        .success-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 24px auto;
+            max-width: 380px;
+            text-align: left;
+        }
+        .success-step {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 12px;
+            padding: 12px 16px;
+            animation: fadeInUp 0.4s ease both;
+        }
+        .success-step:nth-child(2) { animation-delay: 0.1s; }
+        .success-step:nth-child(3) { animation-delay: 0.2s; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .success-step-num {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(130,239,231,0.15);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+        .success-step-text { font-size: 0.88rem; color: var(--text-soft); line-height: 1.4; }
+
+        /* ===== IMAGE MODAL ===== */
+        #imgModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            background: rgba(4,6,10,0.95);
+            backdrop-filter: blur(8px);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        #imgModal.open { display: flex; }
+        #imgModal img {
             max-width: 90vw;
             max-height: 85vh;
-            width: auto;
-            height: auto;
             object-fit: contain;
-            border-radius: 12px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            border-radius: 16px;
         }
-        /* ------------------------------------- */
+        .modal-close {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            z-index: 100000;
+        }
+        .modal-close:hover { background: rgba(220,53,69,0.7); }
 
-        select { width: 100%; padding: 12px; background: #2a2a2a; border: 1px solid #444; border-radius: 8px; color: white; font-family: inherit; }
+        /* ===== PRIZE BOX ===== */
+        .prize-box {
+            background: linear-gradient(135deg, rgba(247,211,122,0.08), rgba(130,239,231,0.05));
+            border: 1px solid rgba(247,211,122,0.2);
+            border-radius: 14px;
+            padding: 16px 20px;
+            margin-top: 12px;
+        }
+        .prize-box p { margin: 0; color: #ffd76a; white-space: pre-line; line-height: 1.7; font-size: 0.92rem; }
+
+        /* ===== SELECT ===== */
+        .field-wrap select {
+            color-scheme: dark;
+            background-color: rgba(18,23,32,0.96);
+        }
+
+        /* ===== SIZE SELECT ===== */
+        .size-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .size-opt {
+            padding: 10px 6px;
+            border-radius: 10px;
+            border: 1.5px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04);
+            color: var(--text-dim);
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .size-opt:hover { border-color: rgba(130,239,231,0.4); color: var(--text-main); }
+        .size-opt.selected {
+            border-color: var(--accent);
+            background: rgba(130,239,231,0.12);
+            color: var(--accent);
+        }
+
+        /* ===== LOADING ===== */
+        #loadingView {
+            text-align: center;
+            padding: 80px 20px;
+        }
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(130,239,231,0.2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ===== MOBILE ===== */
+        @media (max-width: 600px) {
+            .jersey-images-row { grid-template-columns: 1fr; }
+            .jersey-image-box { aspect-ratio: 3/2; }
+            .step-label { font-size: 0.65rem; }
+        }
     </style>
 </head>
 <body>
-    <div class="container" style="max-width: 700px;">
-        <div id="loading" style="text-align:center; font-size: 1.5em; color: #00d4ff; padding: 50px 0;">⏳ กำลังโหลดข้อมูลรายการแข่งขัน...</div>
-        
-        <div id="registrationContent" style="display: none;">
-            <div class="campaign-header">
-                <img id="bannerImg" class="campaign-banner" style="display:none;" alt="Banner">
-                <h1 id="cName" style="color: #fff; margin-bottom: 10px; text-transform: uppercase;">ชื่อรายการ</h1>
-                <div class="info-box">
-                    <h3 style="color:#00d4ff; margin-top:0;">📜 กติกาและรายละเอียด</h3>
-                    <p id="cRules" style="white-space: pre-line; color:#ddd; line-height: 1.6;"></p>
-                    <hr style="border-color:#444; margin: 15px 0;">
-                    <p style="font-size: 1.2em; margin:0;">💵 ค่าสมัคร: <strong id="cFee" style="color:#f39c12; font-size: 1.4em;"></strong> บาท</p>
-                    <div id="prizeWrap" style="display:none; margin-top:15px;">
-                        <hr style="border-color:#444; margin: 15px 0;">
-                        <p style="font-size: 1.08em; margin:0 0 8px 0;">🏆 รางวัลการแข่งขัน</p>
-                        <p id="cPrize" style="white-space: pre-line; color:#ffd76a; line-height: 1.7; margin:0;"></p>
+    <div class="container" style="max-width: 680px;">
+
+        <!-- Loading -->
+        <div id="loadingView">
+            <div class="loading-spinner"></div>
+            <p style="color: var(--accent); font-size: 1rem;">กำลังโหลดข้อมูลรายการแข่งขัน...</p>
+        </div>
+
+        <!-- Main Registration Content -->
+        <div id="mainView" style="display:none;">
+
+            <!-- Campaign Banner -->
+            <div style="text-align:center; margin-bottom: 24px;">
+                <img id="bannerImg" class="campaign-banner" alt="Banner">
+                <h1 id="cName" style="font-size: 1.8em; color: #fff; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 2px;"></h1>
+                <p style="color: var(--text-dim); font-size: 0.9rem; margin: 0;">กรอกข้อมูลให้ครบถ้วนเพื่อสมัครแข่งขัน</p>
+            </div>
+
+            <!-- Tournament Info -->
+            <div class="info-block" id="infoBlock">
+                <h4>📜 รายละเอียดการแข่งขัน</h4>
+                <p id="cRules" style="white-space:pre-line;"></p>
+                <hr style="border-color: rgba(255,255,255,0.08); margin: 14px 0;">
+                <p>💵 ค่าสมัคร: <span class="fee-big" id="cFee"></span> <span style="color:var(--text-dim); font-size:0.85rem;">บาท</span></p>
+                <div id="prizeSection" style="display:none;">
+                    <div class="prize-box">
+                        <p>🏆 <strong style="color: var(--gold);">รางวัลการแข่งขัน</strong><br><span id="cPrize"></span></p>
                     </div>
                 </div>
             </div>
 
-            <div class="form-container">
-                <h2 style="text-align: center; color: #fff; margin-top:0; margin-bottom: 20px;">📝 กรอกข้อมูลสมัครแข่งขัน</h2>
-                <form id="registerForm">
-                    <div class="form-group">
-                        <label>ชื่อผู้เข้าแข่งขัน (หรือชื่อทีม) *</label>
-                        <input type="text" id="playerName" placeholder="กรอกชื่อของคุณ" required>
+            <!-- Form Container -->
+            <div class="form-container" style="padding: 28px 24px;">
+
+                <!-- Step Wizard -->
+                <div class="step-wizard" id="stepWizard">
+                    <div class="step-item">
+                        <div class="step-circle active" id="circle1">1</div>
+                        <div class="step-label active" id="label1">ข้อมูลส่วนตัว</div>
                     </div>
-                    <div class="form-group">
-                        <label>เบอร์โทรศัพท์ติดต่อ *</label>
-                        <input type="tel" id="playerPhone" placeholder="08X-XXX-XXXX" required>
+                    <div class="step-connector" id="conn1"></div>
+                    <div class="step-item">
+                        <div class="step-circle" id="circle2">2</div>
+                        <div class="step-label" id="label2">เสื้อ & ชำระเงิน</div>
                     </div>
-                    
-                    <div id="jerseySection" class="form-group" style="display:none; background:#222; padding:15px; border-radius:8px; border: 1px dashed #555;">
-                        <label style="color:#00d4ff;">👕 รูปแบบเสื้อแข่งขัน</label>
-                        <img id="jerseyImg" class="jersey-preview" alt="Jersey" style="display:none;">
-                        <div id="sizeChartWrap" style="display:none; margin-top:15px;">
-                            <label style="color:#00d4ff;">📏 ตารางไซส์เสื้อ</label>
-                            <img id="sizeChartImg" class="size-chart-preview" alt="Size chart">
+                    <div class="step-connector" id="conn2"></div>
+                    <div class="step-item">
+                        <div class="step-circle" id="circle3">✓</div>
+                        <div class="step-label" id="label3">ยืนยันข้อมูล</div>
+                    </div>
+                </div>
+
+                <!-- STEP 1: Personal Info -->
+                <div class="form-step active" id="step1">
+                    <div class="field-wrap">
+                        <label>
+                            <span class="required-dot"></span>
+                            ชื่อผู้เข้าแข่งขัน (หรือชื่อทีม)
+                        </label>
+                        <input type="text" id="playerName" placeholder="กรอกชื่อนิกเนม หรือชื่อทีมของคุณ" maxlength="60" autocomplete="off" spellcheck="false">
+                        <div class="char-count"><span id="nameCount">0</span>/60</div>
+                        <div class="field-hint" id="nameHint"></div>
+                    </div>
+                    <div class="field-wrap">
+                        <label>
+                            <span class="required-dot"></span>
+                            เบอร์โทรศัพท์ติดต่อ
+                        </label>
+                        <input type="tel" id="playerPhone" placeholder="0XX-XXX-XXXX" maxlength="13" inputmode="tel">
+                        <div class="field-hint" id="phoneHint"></div>
+                    </div>
+                    <div class="step-nav">
+                        <button class="btn-next" id="nextBtn1" onclick="goStep(2)">ถัดไป: เลือกเสื้อและชำระเงิน →</button>
+                    </div>
+                </div>
+
+                <!-- STEP 2: Jersey + Payment -->
+                <div class="form-step" id="step2">
+
+                    <!-- Jersey Section (shown only if jerseyImg or sizeChartImg) -->
+                    <div class="jersey-card" id="jerseySection" style="display:none;">
+                        <div class="jersey-card-title">
+                            <span>👕</span> รูปแบบเสื้อแข่งขัน
                         </div>
-                        <label style="margin-top:15px;">ไซส์เสื้อที่ต้องการ</label>
-                        <select id="jerseySize">
-                            <option value="-">ไม่ระบุ / ไม่รับเสื้อ</option>
-                            <option value="S">S</option>
-                            <option value="M">M</option>
-                            <option value="L">L</option>
-                            <option value="XL">XL</option>
-                            <option value="XXL">2XL</option>
-                            <option value="3XL">3XL</option>
-                            <option value="4XL">4XL</option>
-                            <option value="5XL">5XL</option>
-                            <option value="6XL">6XL</option>
-                        </select>
+                        <div class="jersey-images-row" id="jerseyImagesRow"></div>
+                        <div class="field-wrap" style="margin-bottom:0;">
+                            <label>เลือกไซส์เสื้อที่ต้องการ</label>
+                            <div class="size-grid" id="sizeGrid"></div>
+                            <input type="hidden" id="jerseySize" value="-">
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>แนบสลิปโอนเงินค่าสมัคร *</label>
-                        <input type="file" id="paymentSlip" accept="image/*" required>
+                    <!-- Payment Slip -->
+                    <div class="field-wrap">
+                        <label>
+                            <span class="required-dot"></span>
+                            แนบสลิปโอนเงินค่าสมัคร
+                        </label>
+                        <div class="slip-upload-area" id="slipUploadArea">
+                            <input type="file" id="paymentSlip" accept="image/*" onchange="handleSlipChange(event)">
+                            <div class="slip-upload-icon">📎</div>
+                            <div class="slip-upload-text">
+                                <strong>แตะเพื่อเลือกรูปสลิป</strong><br>
+                                หรือลากวางไฟล์ที่นี่<br>
+                                <small style="color:var(--text-dim); font-size:0.78rem;">รองรับ JPG, PNG, WEBP (ไม่เกิน 10MB)</small>
+                            </div>
+                        </div>
+                        <div class="slip-preview-box" id="slipPreview">
+                            <img id="slipPreviewImg" alt="Slip preview">
+                            <div class="slip-preview-overlay">
+                                <button class="slip-remove-btn" onclick="removeSlip()">✕ เปลี่ยนรูป</button>
+                            </div>
+                        </div>
+                        <div class="field-hint" id="slipHint"></div>
                     </div>
 
-                    <button type="submit" class="btn-confirm" id="submitBtn" style="width:100%; font-size:1.2em; margin-top:10px;">✅ ยืนยันการสมัคร</button>
-                </form>
+                    <div class="step-nav">
+                        <button class="btn-prev" onclick="goStep(1)">← ย้อนกลับ</button>
+                        <button class="btn-next" id="nextBtn2" onclick="goStep(3)">ดูสรุปและยืนยัน →</button>
+                    </div>
+                </div>
+
+                <!-- STEP 3: Confirm -->
+                <div class="form-step" id="step3">
+                    <p style="text-align:center; color:var(--text-dim); font-size:0.88rem; margin-bottom:20px;">ตรวจสอบข้อมูลให้ถูกต้องก่อนส่ง</p>
+
+                    <div class="confirm-card">
+                        <div class="confirm-card-header">ข้อมูลผู้สมัคร</div>
+                        <div class="confirm-row">
+                            <span class="confirm-key">ชื่อ</span>
+                            <span class="confirm-val" id="cfmName">—</span>
+                        </div>
+                        <div class="confirm-row">
+                            <span class="confirm-key">เบอร์โทร</span>
+                            <span class="confirm-val" id="cfmPhone">—</span>
+                        </div>
+                        <div class="confirm-row" id="cfmJerseyRow" style="display:none;">
+                            <span class="confirm-key">ไซส์เสื้อ</span>
+                            <span class="confirm-val" id="cfmJersey">—</span>
+                        </div>
+                    </div>
+
+                    <div class="confirm-card">
+                        <div class="confirm-card-header">หลักฐานการชำระเงิน</div>
+                        <img class="confirm-slip-preview" id="cfmSlip" alt="Slip">
+                    </div>
+
+                    <div style="background:rgba(255,125,115,0.06); border: 1px solid rgba(255,125,115,0.2); border-radius:14px; padding:14px 18px; margin-bottom:20px; font-size:0.82rem; color:var(--text-dim); line-height:1.6;">
+                        ⚠️ หลังส่งข้อมูลแล้ว <strong style="color:var(--text-main);">รอแอดมินตรวจสอบและอนุมัติ</strong> ก่อนประกาศสายการแข่ง
+                    </div>
+
+                    <div class="step-nav">
+                        <button class="btn-prev" onclick="goStep(2)">← แก้ไขข้อมูล</button>
+                        <button class="btn-submit" id="submitBtn" onclick="submitRegistration()">✅ ยืนยันส่งข้อมูล</button>
+                    </div>
+                </div>
+
             </div>
         </div>
 
-        <div id="successMessage" style="display: none; text-align:center; padding: 50px 20px;">
-            <h1 style="color: #28a745; font-size: 4em; margin:0;">🎉</h1>
-            <h2 style="color: #fff;">สมัครเรียบร้อยแล้ว!</h2>
-            <p style="color: #aaa; font-size: 1.1em; line-height: 1.6;">ข้อมูลและสลิปของคุณถูกส่งไปยังผู้จัดงานแล้ว<br>กรุณารอแอดมินตรวจสอบและประกาศสายการแข่งขันต่อไป</p>
+        <!-- Error View -->
+        <div id="errorView" style="display:none; text-align:center; padding:80px 20px;">
+            <div style="font-size:4rem; margin-bottom:16px;">❌</div>
+            <h2 id="errorMsg" style="color: var(--status-danger);">ไม่พบรายการแข่งขัน</h2>
+            <p style="color:var(--text-dim);">URL อาจไม่ถูกต้อง หรือรายการนี้ถูกปิดรับสมัครแล้ว</p>
+        </div>
+
+        <!-- Success View -->
+        <div id="successView">
+            <span class="success-icon">🎉</span>
+            <h2 style="color: #fff; font-size:1.6rem; margin-bottom:4px;">สมัครเรียบร้อยแล้ว!</h2>
+            <div class="success-name-badge" id="successName"></div>
+            <p style="color:var(--text-dim); font-size:0.92rem; margin: 0 0 8px;">ข้อมูลและสลิปของคุณถูกส่งไปยังผู้จัดงานแล้ว</p>
+            <div class="success-steps">
+                <div class="success-step">
+                    <div class="success-step-num">1</div>
+                    <div class="success-step-text"><strong style="color:var(--text-main);">รอแอดมินตรวจสอบสลิป</strong><br>ทีมงานจะตรวจสอบการชำระเงินของคุณ</div>
+                </div>
+                <div class="success-step">
+                    <div class="success-step-num">2</div>
+                    <div class="success-step-text"><strong style="color:var(--text-main);">ติดตามประกาศสายแข่ง</strong><br>รายชื่อและสายจะประกาศก่อนวันแข่ง</div>
+                </div>
+                <div class="success-step">
+                    <div class="success-step-num">3</div>
+                    <div class="success-step-text"><strong style="color:var(--text-main);">มาให้ตรงเวลา</strong><br>พบกันในวันแข่งขันครับ 🏆</div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div id="imagePreviewModal" class="img-modal">
-        <span id="closeImagePreviewBtn" class="close-modal">&times;</span>
-        <img class="img-modal-content" id="previewModalImage" alt="Expanded preview">
+    <!-- Image Modal -->
+    <div id="imgModal">
+        <button class="modal-close" onclick="closeImgModal()">✕</button>
+        <img id="imgModalSrc" alt="Preview">
     </div>
 
     <script type="module">
         import { db, doc, getDoc, getDocs, query, where, collection, addDoc } from "./firebase-config.js";
 
-        // ดึง ID แคมเปญจาก URL
         const urlParams = new URLSearchParams(window.location.search);
         const campaignId = urlParams.get('campaign');
 
-        window.openImagePreview = (src) => {
+        let slipBase64 = null;
+        let hasJersey = false;
+        window._campaignId = campaignId;
+
+        // ===== UTILITIES =====
+        window.openImgModal = (src) => {
             if (!src) return;
-            const modal = document.getElementById('imagePreviewModal');
-            const image = document.getElementById('previewModalImage');
-            image.src = src;
-            modal.classList.add('open');
-            document.body.style.overflow = 'auto';
+            document.getElementById('imgModalSrc').src = src;
+            document.getElementById('imgModal').classList.add('open');
+            document.body.style.overflow = 'hidden';
         };
-
-        window.closeImagePreview = () => {
-            const modal = document.getElementById('imagePreviewModal');
-            modal.classList.remove('open');
-            document.body.style.overflow = 'auto';
+        window.closeImgModal = () => {
+            document.getElementById('imgModal').classList.remove('open');
+            document.body.style.overflow = '';
         };
-
+        document.getElementById('imgModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) window.closeImgModal();
+        });
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') window.closeImagePreview();
+            if (e.key === 'Escape') window.closeImgModal();
         });
 
-        document.getElementById('imagePreviewModal').addEventListener('click', (e) => {
-            if (e.target.id === 'imagePreviewModal') window.closeImagePreview();
-        });
+        // ===== SIZE GRID =====
+        const sizes = ['-', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '5XL', '6XL'];
+        const sizeLabels = { '-': 'ไม่รับ', 'S': 'S', 'M': 'M', 'L': 'L', 'XL': 'XL', 'XXL': '2XL', '3XL': '3XL', '4XL': '4XL', '5XL': '5XL', '6XL': '6XL' };
+        let selectedSize = '-';
 
-        document.getElementById('closeImagePreviewBtn').addEventListener('click', () => {
-            window.closeImagePreview();
-        });
-
-        const bindExpandableImage = (id, src) => {
-            const img = document.getElementById(id);
-            if (!img || !src) return;
-
-            img.src = src;
-            img.style.display = 'block';
-            img.style.cursor = 'zoom-in';
-
-            if (!img.dataset.expandBound) {
-                img.addEventListener('click', () => {
-                    if (img.src) window.openImagePreview(img.src);
-                });
-                img.dataset.expandBound = 'true';
-            }
-        };
-
-        async function loadCampaign() {
-            if (!campaignId) {
-                document.getElementById('loading').innerText = "❌ ไม่พบรหัสรายการแข่งขัน (URL ไม่ถูกต้อง)";
-                return;
-            }
-            try {
-                const docSnap = await getDoc(doc(db, "campaigns", campaignId));
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    
-                    // นำข้อมูลมาแสดงบนหน้าจอ
-                    document.getElementById('cName').innerText = data.name;
-                    document.getElementById('cRules').innerText = data.rules;
-                    document.getElementById('cFee').innerText = data.fee;
-
-                    const prizeText = (data.prize || "").trim();
-                    if (prizeText) {
-                        document.getElementById('prizeWrap').style.display = 'block';
-                        document.getElementById('cPrize').innerText = prizeText;
-                    } else {
-                        document.getElementById('prizeWrap').style.display = 'none';
-                    }
-                    
-                    // โชว์แบนเนอร์ ถ้าแอดมินอัปโหลดไว้
-                    if (data.bannerImg) {
-                        bindExpandableImage('bannerImg', data.bannerImg);
-                    }
-
-                    // โชว์ข้อมูลเสื้อและตารางไซส์ ถ้าแอดมินอัปโหลดไว้
-                    if (data.jerseyImg || data.sizeChartImg) {
-                        document.getElementById('jerseySection').style.display = 'block';
-                    }
-                    if (data.jerseyImg) {
-                        bindExpandableImage('jerseyImg', data.jerseyImg);
-                    }
-                    if (data.sizeChartImg) {
-                        document.getElementById('sizeChartWrap').style.display = 'block';
-                        bindExpandableImage('sizeChartImg', data.sizeChartImg);
-                    }
-
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('registrationContent').style.display = 'block';
-                } else {
-                    document.getElementById('loading').innerText = "❌ ไม่พบข้อมูลรายการนี้ (อาจถูกลบหรือปิดรับสมัครแล้ว)";
-                }
-            } catch (e) {
-                document.getElementById('loading').innerText = "❌ เกิดข้อผิดพลาด: " + e.message;
-            }
+        function buildSizeGrid() {
+            const grid = document.getElementById('sizeGrid');
+            grid.innerHTML = '';
+            sizes.forEach(s => {
+                const btn = document.createElement('div');
+                btn.className = `size-opt${s === selectedSize ? ' selected' : ''}`;
+                btn.textContent = sizeLabels[s];
+                btn.onclick = () => {
+                    selectedSize = s;
+                    document.getElementById('jerseySize').value = s;
+                    document.querySelectorAll('.size-opt').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                };
+                grid.appendChild(btn);
+            });
         }
 
-        const fileToBase64 = (file) => new Promise((resolve, reject) => {
-        if (!file) return resolve(null);
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (e) => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                let w = img.width, h = img.height;
-                const max = 800; // ย่อขนาดให้กว้าง/ยาวสูงสุดไม่เกิน 800px
-                if (w > h && w > max) { h *= max / w; w = max; }
-                else if (h > max) { w *= max / h; h = max; }
-                canvas.width = w; canvas.height = h;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, w, h);
-                // บีบอัดเป็น JPEG คุณภาพ 70%
-                resolve(canvas.toDataURL('image/jpeg', 0.7));
+        // ===== SLIP UPLOAD =====
+        window.handleSlipChange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 10 * 1024 * 1024) {
+                showHint('slipHint', 'ไฟล์ใหญ่เกิน 10MB กรุณาเลือกใหม่', 'error');
+                e.target.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let w = img.width, h = img.height;
+                    const max = 900;
+                    if (w > h && w > max) { h *= max / w; w = max; }
+                    else if (h > max) { w *= max / h; h = max; }
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    slipBase64 = canvas.toDataURL('image/jpeg', 0.75);
+                    document.getElementById('slipPreviewImg').src = slipBase64;
+                    document.getElementById('slipPreview').style.display = 'block';
+                    document.getElementById('slipUploadArea').style.display = 'none';
+                    showHint('slipHint', '✓ แนบสลิปเรียบร้อย', 'success');
+                };
+                img.src = ev.target.result;
             };
-            img.src = e.target.result;
+            reader.readAsDataURL(file);
         };
-        reader.onerror = reject;
-    });
 
-        const normalizePlayerName = (value) => value.trim().replace(/\s+/g, ' ').toLowerCase();
+        window.removeSlip = () => {
+            slipBase64 = null;
+            document.getElementById('paymentSlip').value = '';
+            document.getElementById('slipPreview').style.display = 'none';
+            document.getElementById('slipUploadArea').style.display = 'block';
+            document.getElementById('slipHint').textContent = '';
+            document.getElementById('slipHint').className = 'field-hint';
+        };
 
-        // จัดการเมื่อกดปุ่ม Submit
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        // Drag-over effect
+        const uploadArea = document.getElementById('slipUploadArea');
+        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
+        uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                document.getElementById('paymentSlip').files = dt.files;
+                window.handleSlipChange({ target: { files: [file], value: '' } });
+            }
+        });
+
+        // ===== VALIDATION =====
+        function showHint(id, msg, type) {
+            const el = document.getElementById(id);
+            el.textContent = msg;
+            el.className = `field-hint ${type}`;
+        }
+
+        function validateName() {
+            const val = document.getElementById('playerName').value.trim();
+            const count = val.length;
+            document.getElementById('nameCount').textContent = count;
+            document.getElementById('nameCount').parentElement.className = `char-count${count > 50 ? ' warn' : ''}`;
+            const input = document.getElementById('playerName');
+            if (!val) {
+                input.className = ''; showHint('nameHint', '', ''); return false;
+            }
+            if (val.length < 2) {
+                input.className = 'invalid'; showHint('nameHint', 'ชื่อต้องมีอย่างน้อย 2 ตัวอักษร', 'error'); return false;
+            }
+            input.className = 'valid'; showHint('nameHint', '✓ ชื่อพร้อมสมัคร', 'success'); return true;
+        }
+
+        function validatePhone() {
+            let val = document.getElementById('playerPhone').value.replace(/\D/g, '');
+            const input = document.getElementById('playerPhone');
+            if (val.length >= 10) {
+                const fmt = val.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+                input.value = fmt;
+            }
+            if (!val) { input.className = ''; showHint('phoneHint', '', ''); return false; }
+            if (val.length < 9 || val.length > 10) {
+                input.className = 'invalid'; showHint('phoneHint', 'กรุณากรอกเบอร์ให้ถูกต้อง (9-10 หลัก)', 'error'); return false;
+            }
+            input.className = 'valid'; showHint('phoneHint', '✓ เบอร์โทรถูกต้อง', 'success'); return true;
+        }
+
+        document.getElementById('playerName').addEventListener('input', validateName);
+        document.getElementById('playerPhone').addEventListener('input', validatePhone);
+
+        // ===== STEP NAVIGATION =====
+        window.goStep = async (n) => {
+            const current = document.querySelector('.form-step.active');
+            const currentN = parseInt(current.id.replace('step',''));
+
+            if (n > currentN) {
+                if (n === 2) {
+                    if (!validateName()) { document.getElementById('playerName').focus(); return; }
+                    if (!validatePhone()) { document.getElementById('playerPhone').focus(); return; }
+                }
+                if (n === 3) {
+                    if (!slipBase64) {
+                        showHint('slipHint', 'กรุณาแนบสลิปโอนเงินก่อน', 'error');
+                        return;
+                    }
+                    buildConfirmSummary();
+                }
+            }
+
+            current.classList.remove('active');
+            document.getElementById(`step${n}`).classList.add('active');
+            updateWizard(n);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        function updateWizard(active) {
+            for (let i = 1; i <= 3; i++) {
+                const circle = document.getElementById(`circle${i}`);
+                const label = document.getElementById(`label${i}`);
+                circle.className = `step-circle${i < active ? ' done' : i === active ? ' active' : ''}`;
+                label.className = `step-label${i < active ? ' done' : i === active ? ' active' : ''}`;
+                if (i < 3) {
+                    document.getElementById(`conn${i}`).className = `step-connector${i < active ? ' done' : ''}`;
+                }
+            }
+            document.getElementById('circle3').textContent = active === 3 ? '✓' : '3';
+        }
+
+        function buildConfirmSummary() {
+            document.getElementById('cfmName').textContent = document.getElementById('playerName').value.trim();
+            document.getElementById('cfmPhone').textContent = document.getElementById('playerPhone').value.trim();
+            const size = document.getElementById('jerseySize').value;
+            if (hasJersey && size !== '-') {
+                document.getElementById('cfmJersey').textContent = sizeLabels[size] || size;
+                document.getElementById('cfmJerseyRow').style.display = 'flex';
+            } else {
+                document.getElementById('cfmJerseyRow').style.display = 'none';
+            }
+            document.getElementById('cfmSlip').src = slipBase64;
+        }
+
+        // ===== SUBMIT =====
+        window.submitRegistration = async () => {
             const btn = document.getElementById('submitBtn');
-            btn.innerText = "⏳ กำลังส่งข้อมูล...";
+            btn.textContent = '⏳ กำลังส่งข้อมูล...';
             btn.disabled = true;
 
             try {
                 const playerName = document.getElementById('playerName').value.trim();
-                const normalizedPlayerName = normalizePlayerName(playerName);
+                const normalizedName = playerName.trim().replace(/\s+/g, ' ').toLowerCase();
 
+                // Check duplicate
                 const existingRegs = await getDocs(query(collection(db, "registrations"), where("campaignId", "==", campaignId)));
-                const duplicateExists = existingRegs.docs.some((docSnap) => {
-                    const existingName = docSnap.data().playerName || "";
-                    return normalizePlayerName(existingName) === normalizedPlayerName;
+                const duplicate = existingRegs.docs.some(d => {
+                    return (d.data().playerName || "").trim().replace(/\s+/g, ' ').toLowerCase() === normalizedName;
                 });
 
-                if (duplicateExists) {
-                    alert("❌ มีผู้สมัครใช้ชื่อนี้แล้ว กรุณาตรวจสอบชื่อหรือเพิ่มข้อมูลกำกับให้ต่างจากเดิม");
-                    btn.innerText = "✅ ยืนยันการสมัคร";
+                if (duplicate) {
+                    alert("❌ มีผู้สมัครใช้ชื่อนี้แล้ว กรุณาเพิ่มข้อมูลกำกับให้ต่างจากเดิม");
+                    btn.textContent = '✅ ยืนยันส่งข้อมูล';
                     btn.disabled = false;
                     return;
                 }
 
-                // แปลงสลิปโอนเงินเป็น Base64
-                const slipFile = document.getElementById('paymentSlip').files[0];
-                const slipBase64 = await fileToBase64(slipFile);
-
-                // สร้าง Object เก็บข้อมูลคนสมัคร
                 const regData = {
-                    campaignId: campaignId,
-                    playerName: playerName,
+                    campaignId,
+                    playerName,
                     phone: document.getElementById('playerPhone').value.trim(),
-                    jerseySize: document.getElementById('jerseySize') ? document.getElementById('jerseySize').value : "-",
+                    jerseySize: document.getElementById('jerseySize').value || '-',
                     paymentSlip: slipBase64,
-                    status: "pending", // สถานะรอแอดมินตรวจสอบ
+                    status: "pending",
                     registeredAt: new Date().toISOString()
                 };
 
-                // บันทึกลงคอลเลกชัน "registrations"
                 await addDoc(collection(db, "registrations"), regData);
-                
-                // โชว์หน้าจอสำเร็จ
-                document.getElementById('registrationContent').style.display = 'none';
-                document.getElementById('successMessage').style.display = 'block';
-                window.scrollTo(0, 0); // เลื่อนจอขึ้นบนสุด
-            } catch (error) {
-                alert("❌ บันทึกไม่สำเร็จ: " + error.message);
-                btn.innerText = "✅ ยืนยันการสมัคร";
+
+                // Show success
+                document.getElementById('mainView').style.display = 'none';
+                const successView = document.getElementById('successView');
+                successView.style.display = 'block';
+                document.getElementById('successName').textContent = playerName;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            } catch (err) {
+                alert("❌ บันทึกไม่สำเร็จ: " + err.message);
+                btn.textContent = '✅ ยืนยันส่งข้อมูล';
                 btn.disabled = false;
             }
-        });
+        };
 
-        // เริ่มโหลดข้อมูลทันทีที่เปิดหน้าเว็บ
-        window.onload = loadCampaign;
+        // ===== LOAD CAMPAIGN =====
+        async function loadCampaign() {
+            if (!campaignId) {
+                document.getElementById('loadingView').style.display = 'none';
+                document.getElementById('errorView').style.display = 'block';
+                document.getElementById('errorMsg').textContent = '❌ ไม่พบรหัสรายการแข่งขัน (URL ไม่ถูกต้อง)';
+                return;
+            }
+
+            try {
+                const snap = await getDoc(doc(db, "campaigns", campaignId));
+                if (!snap.exists()) {
+                    document.getElementById('loadingView').style.display = 'none';
+                    document.getElementById('errorView').style.display = 'block';
+                    return;
+                }
+
+                const data = snap.data();
+                document.getElementById('cName').textContent = data.name;
+                document.title = `สมัครแข่ง | ${data.name}`;
+                document.getElementById('cRules').textContent = data.rules;
+                document.getElementById('cFee').textContent = Number(data.fee).toLocaleString();
+
+                if ((data.prize || '').trim()) {
+                    document.getElementById('prizeSection').style.display = 'block';
+                    document.getElementById('cPrize').textContent = data.prize.trim();
+                }
+
+                if (data.bannerImg) {
+                    const bannerEl = document.getElementById('bannerImg');
+                    bannerEl.src = data.bannerImg;
+                    bannerEl.style.display = 'block';
+                    bannerEl.onclick = () => window.openImgModal(data.bannerImg);
+                }
+
+                // Build jersey section
+                if (data.jerseyImg || data.sizeChartImg) {
+                    hasJersey = true;
+                    document.getElementById('jerseySection').style.display = 'block';
+                    const row = document.getElementById('jerseyImagesRow');
+                    row.innerHTML = '';
+
+                    if (data.jerseyImg && data.sizeChartImg) {
+                        const j = document.createElement('div');
+                        j.className = 'jersey-image-box';
+                        j.innerHTML = `<img src="${data.jerseyImg}" alt="เสื้อแข่ง">`;
+                        j.onclick = () => window.openImgModal(data.jerseyImg);
+
+                        const s = document.createElement('div');
+                        s.className = 'jersey-image-box';
+                        s.innerHTML = `<img src="${data.sizeChartImg}" alt="ตารางไซส์">`;
+                        s.onclick = () => window.openImgModal(data.sizeChartImg);
+
+                        row.appendChild(j);
+                        row.appendChild(s);
+                    } else if (data.jerseyImg) {
+                        const j = document.createElement('div');
+                        j.className = 'jersey-image-box full-width';
+                        j.innerHTML = `<img src="${data.jerseyImg}" alt="เสื้อแข่ง">`;
+                        j.onclick = () => window.openImgModal(data.jerseyImg);
+                        row.appendChild(j);
+                    } else if (data.sizeChartImg) {
+                        const s = document.createElement('div');
+                        s.className = 'jersey-image-box full-width';
+                        s.innerHTML = `<img src="${data.sizeChartImg}" alt="ตารางไซส์">`;
+                        s.onclick = () => window.openImgModal(data.sizeChartImg);
+                        row.appendChild(s);
+                    }
+
+                    buildSizeGrid();
+                }
+
+                document.getElementById('loadingView').style.display = 'none';
+                document.getElementById('mainView').style.display = 'block';
+
+            } catch (err) {
+                document.getElementById('loadingView').style.display = 'none';
+                document.getElementById('errorView').style.display = 'block';
+                document.getElementById('errorMsg').textContent = '❌ เกิดข้อผิดพลาด: ' + err.message;
+            }
+        }
+
+        loadCampaign();
     </script>
 </body>
 </html>
