@@ -42,10 +42,10 @@
         /* 🛠️ แก้ไขส่วนของ Modal แสดงรูปภาพ 🛠️ */
         #imagePreviewModal {
             display: none;
-            position: fixed !important;
+            position: relative;
             top: 0; left: 0; right: 0; bottom: 0;
             width: 100vw;
-            height: 100vh;
+            min-height: 100vh;
             z-index: 99999;
             background: rgba(5, 8, 12, 0.95); /* พื้นหลังเข้มขึ้นนิดนึงให้รูปเด่น */
             backdrop-filter: blur(10px);
@@ -185,13 +185,13 @@
             const image = document.getElementById('previewModalImage');
             image.src = src;
             modal.classList.add('open');
-            document.body.style.overflow = 'hidden';
+            document.body.style.overflow = 'auto';
         };
 
         window.closeImagePreview = () => {
             const modal = document.getElementById('imagePreviewModal');
             modal.classList.remove('open');
-            document.body.style.overflow = '';
+            document.body.style.overflow = 'auto';
         };
 
         document.addEventListener('keydown', (e) => {
