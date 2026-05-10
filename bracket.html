@@ -14,10 +14,102 @@
         .zone-btn.active { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent-glow); transform: scale(1.05); }
         .zone-btn.inactive { background: #222; color: #aaa; border: 1px solid #444; }
         .zone-btn.inactive:hover { background: #333; color: #fff; }
+
+        /* ── SPONSOR STRIP ─────────────────────────────────── */
+        #sponsorBar {
+            flex-shrink: 0;
+            height: 56px;
+            background: rgba(0,0,0,0.7);
+            border-top: 1px solid rgba(255,255,255,0.08);
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        #sponsorBar.hidden { display: none; }
+        #sponsorTrack {
+            display: flex;
+            align-items: center;
+            gap: 48px;
+            white-space: nowrap;
+            will-change: transform;
+            padding: 0 24px;
+        }
+        #sponsorTrack img {
+            height: 38px;
+            width: auto;
+            max-width: 130px;
+            object-fit: contain;
+            filter: drop-shadow(0 1px 6px rgba(0,0,0,0.7));
+            opacity: 0.92;
+            flex-shrink: 0;
+        }
+        /* manage button */
+        #sponsorMgmtBtn {
+            position: fixed;
+            bottom: 66px;
+            right: 18px;
+            z-index: 200;
+            background: rgba(0,0,0,0.75);
+            border: 1px solid #444;
+            color: #aaa;
+            border-radius: 8px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.2s;
+        }
+        #sponsorMgmtBtn:hover { border-color: #ffd700; color: #ffd700; }
+
+        /* modal */
+        #sponsorModal {
+            display: none;
+            position: fixed; inset: 0; z-index: 300;
+            background: rgba(0,0,0,0.75);
+            align-items: center; justify-content: center;
+        }
+        #sponsorModal.open { display: flex; }
+        #sponsorModalBox {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: 24px;
+            width: 420px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        #sponsorModalBox h3 { margin: 0 0 16px; color: #ffd700; font-size: 15px; }
+        .sp-upload-zone {
+            border: 2px dashed #444;
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 14px;
+            transition: 0.2s;
+        }
+        .sp-upload-zone:hover { border-color: #ffd700; }
+        .sp-upload-zone p { margin: 4px 0; color: #888; font-size: 12px; }
+        .sp-item {
+            display: flex; align-items: center; gap: 10px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-bottom: 8px;
+        }
+        .sp-item img { width: 56px; height: 34px; object-fit: contain; background: rgba(255,255,255,0.05); border-radius: 4px; }
+        .sp-item span { flex: 1; font-size: 12px; color: #ccc; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .sp-del { background: rgba(200,30,30,0.2); border: 1px solid #f443; border-radius: 6px; color: #f88; padding: 3px 8px; cursor: pointer; font-size: 12px; flex-shrink: 0; }
+        .sp-modal-footer { display: flex; gap: 8px; margin-top: 14px; }
+        .sp-modal-footer button { flex: 1; padding: 10px 0; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .btn-close-modal { background: #333; color: #aaa; }
+        .btn-close-modal:hover { background: #444; }
     </style>
 </head>
 <body>
     <div class="bracket-full-container">
+        <!-- Header -->
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; flex-shrink: 0; background: var(--card-bg); padding: 15px 30px; border-radius: 15px; border: 1px solid var(--glass-border); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
             <button onclick="window.location.href='setup.html'" style="background:#333; color:white; padding:12px 20px; border-radius:10px; border:none; cursor:pointer; font-weight:bold; transition:0.2s;" onmouseover="this.style.background='#555'" onmouseout="this.style.background='#333'">⬅ กลับหน้าจัดสาย</button>
             <div style="text-align: center;">
@@ -26,7 +118,43 @@
             </div>
             <button id="saveBtn" class="btn-confirm" style="padding:12px 30px;">💾 บันทึกผล</button>
         </div>
+
+        <!-- Bracket -->
         <div id="bracketWrapper"><div id="bracket" class="bracket-visual"></div></div>
+
+        <!-- Sponsor Strip -->
+        <div id="sponsorBar" class="hidden">
+            <div id="sponsorTrack"></div>
+        </div>
+    </div>
+
+    <!-- Manage button -->
+    <button id="sponsorMgmtBtn" onclick="openSponsorModal()">🖼️ สปอนเซอร์</button>
+
+    <!-- Sponsor Modal -->
+    <div id="sponsorModal">
+        <div id="sponsorModalBox">
+            <h3>💰 จัดการสปอนเซอร์</h3>
+
+            <label class="sp-upload-zone">
+                <div style="font-size:28px;margin-bottom:4px">🖼️</div>
+                <p style="color:#ffd700;font-weight:bold">แตะเพื่ออัพโหลดโลโก้</p>
+                <p>PNG / JPG / WebP · บีบอัดอัตโนมัติ · เลือกหลายไฟล์ได้</p>
+                <input type="file" accept="image/*" multiple style="display:none" id="spFileInput">
+            </label>
+
+            <div id="spList"></div>
+
+            <div style="margin-bottom:10px">
+                <label style="color:#888;font-size:11px">ความเร็ว scroll</label>
+                <input type="range" id="spSpeed" min="0.2" max="3" step="0.1" value="0.8" style="width:100%;accent-color:#ffd700">
+            </div>
+
+            <div class="sp-modal-footer">
+                <button class="btn-close-modal" onclick="closeSponsorModal()">✕ ปิด</button>
+                <button style="background:#ffd700;color:#000" onclick="closeSponsorModal()">✅ ใช้งาน</button>
+            </div>
+        </div>
     </div>
 
     <script type="module">
@@ -41,22 +169,17 @@
             try {
                 const campaignSnap = await getDoc(doc(db, "campaigns", data.campaignId));
                 if (campaignSnap.exists()) return campaignSnap.data().name || "";
-            } catch (e) {
-                console.error(e);
-            }
+            } catch (e) { console.error(e); }
             return "";
         }
 
         if (!tourneyId) { alert("ไม่พบรหัสการแข่งขัน!"); window.location.href = 'setup.html'; }
 
-        // ฟังก์ชันวาดปุ่มเมนู
         window.renderZoneNav = (totalPlayers) => {
             const nav = document.getElementById('zoneNav');
             nav.innerHTML = '';
             const totalZones = Math.ceil(totalPlayers / 32);
             if (totalZones <= 1) return;
-            
-            // 1. สร้างปุ่ม Zone A-D (ทำใน Loop)
             for (let i = 0; i < totalZones; i++) {
                 const btn = document.createElement('button');
                 btn.innerText = `ZONE ${String.fromCharCode(65 + i)}`;
@@ -68,8 +191,6 @@
                 };
                 nav.appendChild(btn);
             }
-            
-            // 2. สร้างปุ่ม GRAND FINAL อันเดียวเดี่ยวๆ (ทำนอก Loop) 💥 แก้บั๊กตรงนี้ครับ 💥
             const finalBtn = document.createElement('button');
             finalBtn.innerText = "🏆 รอบชิงชนะเลิศ (GRAND FINAL)";
             finalBtn.className = `zone-btn ${window.currentZoneIdx === 99 ? 'active' : 'inactive'}`;
@@ -115,5 +236,126 @@
         };
     </script>
     <script src="script.js"></script>
+
+    <!-- ── SPONSOR SYSTEM (standalone, no external deps) ── -->
+    <script>
+    (function(){
+        const STORE_KEY = 'g2_sponsors_v2';
+        let sponsors = [];
+        let scrollX = 0;
+        let raf = null;
+        let speed = 0.8;
+
+        // ── Load from localStorage ──────────────────────────
+        function load(){
+            try { sponsors = JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch(e){ sponsors = []; }
+            speed = parseFloat(localStorage.getItem('g2_sponsor_speed')) || 0.8;
+            document.getElementById('spSpeed').value = speed;
+        }
+        function save(){
+            localStorage.setItem(STORE_KEY, JSON.stringify(sponsors));
+            localStorage.setItem('g2_sponsor_speed', speed);
+        }
+
+        // ── Compress image → WebP base64 ───────────────────
+        function compress(file){ return new Promise(resolve=>{
+            const img = new Image(), url = URL.createObjectURL(file);
+            img.onload = ()=>{
+                URL.revokeObjectURL(url);
+                let {width:w, height:h} = img;
+                const r = Math.min(260/w, 100/h, 1); w=Math.round(w*r); h=Math.round(h*r);
+                const c = document.createElement('canvas'); c.width=w; c.height=h;
+                c.getContext('2d').drawImage(img,0,0,w,h);
+                resolve(c.toDataURL('image/webp', 0.85));
+            };
+            img.onerror = ()=>{ URL.revokeObjectURL(url); resolve(null); };
+            img.src = url;
+        });}
+
+        // ── Build scrolling track ───────────────────────────
+        function buildTrack(){
+            const bar = document.getElementById('sponsorBar');
+            const track = document.getElementById('sponsorTrack');
+            if(sponsors.length === 0){ bar.classList.add('hidden'); cancelAnimationFrame(raf); return; }
+            bar.classList.remove('hidden');
+            track.innerHTML = '';
+            // 3 copies for seamless loop
+            [...sponsors,...sponsors,...sponsors].forEach(sp=>{
+                const img = document.createElement('img');
+                img.src = sp.logo; img.alt = sp.name; img.draggable = false;
+                track.appendChild(img);
+            });
+            startScroll();
+        }
+
+        // ── Scroll animation ────────────────────────────────
+        function startScroll(){
+            cancelAnimationFrame(raf);
+            scrollX = 0;
+            const track = document.getElementById('sponsorTrack');
+            const animate = ()=>{
+                scrollX -= speed;
+                const oneW = track.scrollWidth / 3;
+                if(Math.abs(scrollX) >= oneW) scrollX = 0;
+                track.style.transform = `translateX(${scrollX}px)`;
+                raf = requestAnimationFrame(animate);
+            };
+            raf = requestAnimationFrame(animate);
+        }
+
+        // ── Render sponsor list in modal ────────────────────
+        function renderList(){
+            const list = document.getElementById('spList');
+            list.innerHTML = '';
+            if(sponsors.length === 0){
+                list.innerHTML = '<p style="color:#555;font-size:12px;text-align:center;margin:8px 0">ยังไม่มีสปอนเซอร์</p>';
+                return;
+            }
+            sponsors.forEach((sp,i)=>{
+                const row = document.createElement('div'); row.className='sp-item';
+                const img = document.createElement('img'); img.src=sp.logo; img.alt=sp.name;
+                const name = document.createElement('span'); name.textContent=sp.name;
+                const del = document.createElement('button'); del.className='sp-del'; del.textContent='✕';
+                del.onclick=()=>{ sponsors.splice(i,1); save(); buildTrack(); renderList(); };
+                row.append(img,name,del); list.append(row);
+            });
+        }
+
+        // ── Modal open/close ────────────────────────────────
+        window.openSponsorModal = ()=>{
+            renderList();
+            document.getElementById('sponsorModal').classList.add('open');
+        };
+        window.closeSponsorModal = ()=>{
+            speed = parseFloat(document.getElementById('spSpeed').value)||0.8;
+            save(); buildTrack();
+            document.getElementById('sponsorModal').classList.remove('open');
+        };
+
+        // ── File input handler ──────────────────────────────
+        document.getElementById('spFileInput').addEventListener('change', async (e)=>{
+            const files = Array.from(e.target.files||[]);
+            for(const f of files){
+                const logo = await compress(f);
+                if(logo) sponsors.push({ name: f.name.replace(/\.[^.]+$/,''), logo });
+            }
+            e.target.value='';
+            save(); renderList();
+        });
+
+        // ── Speed slider live update ────────────────────────
+        document.getElementById('spSpeed').addEventListener('input', e=>{
+            speed = parseFloat(e.target.value);
+        });
+
+        // ── Close modal on backdrop click ───────────────────
+        document.getElementById('sponsorModal').addEventListener('click', e=>{
+            if(e.target === document.getElementById('sponsorModal')) closeSponsorModal();
+        });
+
+        // ── Init ────────────────────────────────────────────
+        load(); buildTrack();
+    })();
+    </script>
 </body>
 </html>
