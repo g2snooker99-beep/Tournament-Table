@@ -15,46 +15,90 @@
         .zone-btn.inactive { background: #222; color: #aaa; border: 1px solid #444; }
         .zone-btn.inactive:hover { background: #333; color: #fff; }
 
-        /* ── SPONSOR WHEEL ── */
+        /* ── SPONSOR WHEEL ENHANCED ── */
         #sponsorBar {
             flex-shrink: 0;
-            height: 200px;
+            height: 220px;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
             overflow: hidden;
-            background: rgba(0,0,0,0.4);
-            border: 1px solid rgba(255,215,0,0.15);
-            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(20,15,0,0.8) 100%);
+            border: 1px solid rgba(255,215,0,0.2);
+            border-radius: 16px;
             margin: 0 20px 10px;
+            box-shadow: 0 0 30px rgba(255,215,0,0.05), inset 0 0 60px rgba(0,0,0,0.5);
         }
         #sponsorBar.hidden { display: none; }
+        #sponsorBar::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 40px,
+                rgba(255,215,0,0.015) 40px,
+                rgba(255,215,0,0.015) 41px
+            );
+            pointer-events: none;
+        }
         .sp-wheel-slide {
             position: absolute;
             inset: 0;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            gap: 10px;
             opacity: 0;
-            transform: scale(0.7) rotateY(90deg);
-            transition: all 0.6s cubic-bezier(0.4,0,0.2,1);
+            transform: perspective(800px) rotateY(90deg) scale(0.8);
+            transition: all 0.65s cubic-bezier(0.4,0,0.2,1);
             pointer-events: none;
         }
         .sp-wheel-slide.active {
             opacity: 1;
-            transform: scale(1) rotateY(0deg);
+            transform: perspective(800px) rotateY(0deg) scale(1);
         }
         .sp-wheel-slide.exit {
             opacity: 0;
-            transform: scale(0.7) rotateY(-90deg);
+            transform: perspective(800px) rotateY(-90deg) scale(0.8);
         }
         .sp-wheel-slide img {
-            max-width: 280px;
-            max-height: 160px;
+            max-width: 260px;
+            max-height: 140px;
             object-fit: contain;
-            filter: drop-shadow(0 4px 20px rgba(255,215,0,0.3));
+            filter: drop-shadow(0 0 18px rgba(255,215,0,0.5)) drop-shadow(0 4px 12px rgba(0,0,0,0.8));
+            animation: spPulse 3s ease-in-out infinite;
         }
+        .sp-wheel-slide.active img {
+            animation: spPulse 3s ease-in-out infinite;
+        }
+        @keyframes spPulse {
+            0%,100% { filter: drop-shadow(0 0 14px rgba(255,215,0,0.4)) drop-shadow(0 4px 12px rgba(0,0,0,0.8)); }
+            50% { filter: drop-shadow(0 0 28px rgba(255,215,0,0.75)) drop-shadow(0 4px 12px rgba(0,0,0,0.8)); }
+        }
+        .sp-wheel-name {
+            color: rgba(255,215,0,0.8);
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+        /* Progress bar */
+        #spProgress {
+            position: absolute;
+            bottom: 0; left: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #ffd700, #ff8c00);
+            width: 0%;
+            transition: width linear;
+            box-shadow: 0 0 8px #ffd700;
+            border-radius: 0 2px 0 0;
+        }
+        /* Dots */
         .sp-wheel-dots {
             position: absolute;
             bottom: 10px;
@@ -62,18 +106,33 @@
             transform: translateX(-50%);
             display: flex;
             gap: 6px;
+            z-index: 5;
         }
         .sp-wheel-dot {
             width: 6px; height: 6px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.2);
             transition: 0.3s;
+            cursor: pointer;
         }
-        .sp-wheel-dot.active { background: #ffd700; box-shadow: 0 0 6px #ffd700; }
+        .sp-wheel-dot.active {
+            background: #ffd700;
+            box-shadow: 0 0 8px #ffd700;
+            transform: scale(1.3);
+        }
+        /* Corner glow */
+        #sponsorBar::after {
+            content: 'POWERED BY';
+            position: absolute;
+            top: 8px; left: 14px;
+            font-size: 8px;
+            letter-spacing: 2px;
+            color: rgba(255,215,0,0.25);
+            font-weight: bold;
+        }
         #sponsorMgmtBtn {
             position: fixed;
-            top: 80px;
-            right: 18px;
+            top: 80px; right: 18px;
             z-index: 200;
             background: rgba(0,0,0,0.75);
             border: 1px solid #444;
@@ -247,131 +306,139 @@
     </script>
     <script src="script.js"></script>
 
-    <!-- SPONSOR WHEEL SYSTEM -->
+    <!-- SPONSOR WHEEL ENHANCED -->
     <script>
     (function(){
         const STORE_KEY = 'g2_sponsors_v2';
         let sponsors = [];
         let currentIdx = 0;
         let intervalId = null;
-        let speed = 3000; // ms per slide
+        let progressRaf = null;
+        let speed = 4000;
+        let progressStart = null;
 
         function load(){
             try { sponsors = JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch(e){ sponsors = []; }
-            speed = parseInt(localStorage.getItem('g2_sponsor_interval')) || 3000;
+            speed = parseInt(localStorage.getItem('g2_sponsor_interval')) || 4000;
             const sl = document.getElementById('spInterval');
             if(sl) sl.value = speed;
         }
-
         function save(){
             localStorage.setItem(STORE_KEY, JSON.stringify(sponsors));
             localStorage.setItem('g2_sponsor_interval', speed);
         }
-
         function compress(file){ return new Promise(resolve=>{
             const img = new Image(), url = URL.createObjectURL(file);
             img.onload = ()=>{
                 URL.revokeObjectURL(url);
-                let {width:w, height:h} = img;
-                const r = Math.min(400/w, 220/h, 1); w=Math.round(w*r); h=Math.round(h*r);
-                const c = document.createElement('canvas'); c.width=w; c.height=h;
+                let {width:w,height:h}=img;
+                const r=Math.min(400/w,220/h,1);w=Math.round(w*r);h=Math.round(h*r);
+                const c=document.createElement('canvas');c.width=w;c.height=h;
                 c.getContext('2d').drawImage(img,0,0,w,h);
-                resolve(c.toDataURL('image/webp', 0.88));
+                resolve(c.toDataURL('image/webp',0.88));
             };
-            img.onerror = ()=>{ URL.revokeObjectURL(url); resolve(null); };
-            img.src = url;
+            img.onerror=()=>{URL.revokeObjectURL(url);resolve(null);};
+            img.src=url;
         });}
 
         function buildWheel(){
-            const bar = document.getElementById('sponsorBar');
+            const bar=document.getElementById('sponsorBar');
             if(!bar) return;
-            if(sponsors.length === 0){ bar.classList.add('hidden'); clearInterval(intervalId); return; }
+            if(!sponsors.length){bar.classList.add('hidden');clearInterval(intervalId);cancelAnimationFrame(progressRaf);return;}
             bar.classList.remove('hidden');
-            bar.innerHTML = '';
+            bar.innerHTML='';
+            // Progress bar
+            const prog=document.createElement('div');prog.id='spProgress';bar.appendChild(prog);
             // Slides
-            sponsors.forEach((sp, i) => {
-                const slide = document.createElement('div');
-                slide.className = 'sp-wheel-slide' + (i === 0 ? ' active' : '');
-                slide.dataset.idx = i;
-                const img = document.createElement('img');
-                img.src = sp.logo; img.alt = sp.name; img.draggable = false;
-                slide.appendChild(img);
-                bar.appendChild(slide);
+            sponsors.forEach((sp,i)=>{
+                const slide=document.createElement('div');
+                slide.className='sp-wheel-slide'+(i===0?' active':'');
+                slide.dataset.idx=i;
+                const img=document.createElement('img');img.src=sp.logo;img.alt=sp.name;img.draggable=false;
+                const nm=document.createElement('div');nm.className='sp-wheel-name';nm.textContent=sp.name;
+                slide.append(img,nm);bar.appendChild(slide);
             });
             // Dots
-            if(sponsors.length > 1){
-                const dots = document.createElement('div');
-                dots.className = 'sp-wheel-dots';
-                sponsors.forEach((_,i) => {
-                    const d = document.createElement('div');
-                    d.className = 'sp-wheel-dot' + (i===0?' active':'');
-                    d.onclick = () => goTo(i);
-                    dots.appendChild(d);
+            if(sponsors.length>1){
+                const dots=document.createElement('div');dots.className='sp-wheel-dots';
+                sponsors.forEach((_,i)=>{
+                    const d=document.createElement('div');
+                    d.className='sp-wheel-dot'+(i===0?' active':'');
+                    d.onclick=()=>goTo(i,true);dots.appendChild(d);
                 });
                 bar.appendChild(dots);
             }
-            currentIdx = 0;
+            currentIdx=0;
             startAuto();
         }
 
-        function goTo(idx){
-            const slides = document.querySelectorAll('.sp-wheel-slide');
-            const dots = document.querySelectorAll('.sp-wheel-dot');
-            slides.forEach(s => {
-                if(parseInt(s.dataset.idx) === currentIdx) s.classList.add('exit');
+        function goTo(idx, manual=false){
+            const slides=document.querySelectorAll('.sp-wheel-slide');
+            const dots=document.querySelectorAll('.sp-wheel-dot');
+            slides.forEach(s=>{
+                if(parseInt(s.dataset.idx)===currentIdx) s.classList.add('exit');
                 s.classList.remove('active');
             });
-            setTimeout(() => {
-                slides.forEach(s => s.classList.remove('exit'));
-                currentIdx = (idx + sponsors.length) % sponsors.length;
-                slides.forEach(s => {
-                    if(parseInt(s.dataset.idx) === currentIdx) s.classList.add('active');
-                });
-                dots.forEach((d,i) => d.classList.toggle('active', i === currentIdx));
-            }, 350);
+            setTimeout(()=>{
+                slides.forEach(s=>s.classList.remove('exit'));
+                currentIdx=(idx+sponsors.length)%sponsors.length;
+                slides.forEach(s=>{if(parseInt(s.dataset.idx)===currentIdx)s.classList.add('active');});
+                dots.forEach((d,i)=>d.classList.toggle('active',i===currentIdx));
+            },350);
+            if(manual){clearInterval(intervalId);setTimeout(startAuto,speed);}
+            resetProgress();
+        }
+
+        function resetProgress(){
+            cancelAnimationFrame(progressRaf);
+            progressStart=performance.now();
+            const prog=document.getElementById('spProgress');
+            if(!prog||sponsors.length<=1) return;
+            prog.style.transition='none';prog.style.width='0%';
+            const animate=(ts)=>{
+                const pct=Math.min(100,((ts-progressStart)/speed)*100);
+                prog.style.width=pct+'%';
+                if(pct<100) progressRaf=requestAnimationFrame(animate);
+            };
+            requestAnimationFrame(animate);
         }
 
         function startAuto(){
             clearInterval(intervalId);
-            if(sponsors.length <= 1) return;
-            intervalId = setInterval(() => goTo(currentIdx + 1), speed);
+            if(sponsors.length<=1){resetProgress();return;}
+            resetProgress();
+            intervalId=setInterval(()=>{goTo(currentIdx+1);},speed);
         }
 
         function renderList(){
-            const list = document.getElementById('spList');
-            if(!list) return;
-            list.innerHTML = '';
-            if(!sponsors.length){
-                list.innerHTML = '<p style="color:#555;font-size:12px;text-align:center;margin:8px 0">ยังไม่มีสปอนเซอร์</p>';
-                return;
-            }
-            sponsors.forEach((sp,i) => {
-                const row = document.createElement('div'); row.className='sp-item';
-                const img = document.createElement('img'); img.src=sp.logo; img.alt=sp.name;
-                const name = document.createElement('span'); name.textContent=sp.name;
-                const del = document.createElement('button'); del.className='sp-del'; del.textContent='✕';
-                del.onclick=()=>{ sponsors.splice(i,1); save(); buildWheel(); renderList(); };
-                row.append(img,name,del); list.append(row);
+            const list=document.getElementById('spList');if(!list)return;
+            list.innerHTML='';
+            if(!sponsors.length){list.innerHTML='<p style="color:#555;font-size:12px;text-align:center;margin:8px 0">ยังไม่มีสปอนเซอร์</p>';return;}
+            sponsors.forEach((sp,i)=>{
+                const row=document.createElement('div');row.className='sp-item';
+                const img=document.createElement('img');img.src=sp.logo;
+                const nm=document.createElement('span');nm.textContent=sp.name;
+                const del=document.createElement('button');del.className='sp-del';del.textContent='✕';
+                del.onclick=()=>{sponsors.splice(i,1);save();buildWheel();renderList();};
+                row.append(img,nm,del);list.append(row);
             });
         }
 
-        window.openSponsorModal = ()=>{ renderList(); document.getElementById('sponsorModal').classList.add('open'); };
-        window.closeSponsorModal = ()=>{
-            speed = parseInt(document.getElementById('spInterval').value) || 3000;
-            save(); buildWheel();
-            document.getElementById('sponsorModal').classList.remove('open');
+        window.openSponsorModal=()=>{renderList();document.getElementById('sponsorModal').classList.add('open');};
+        window.closeSponsorModal=()=>{
+            speed=parseInt(document.getElementById('spInterval').value)||4000;
+            save();buildWheel();document.getElementById('sponsorModal').classList.remove('open');
         };
 
-        document.addEventListener('DOMContentLoaded', ()=>{
-            const fi = document.getElementById('spFileInput');
-            if(fi) fi.addEventListener('change', async e=>{
-                const files = Array.from(e.target.files||[]);
-                for(const f of files){ const logo=await compress(f); if(logo) sponsors.push({name:f.name.replace(/\.[^.]+$/,''),logo}); }
-                e.target.value=''; save(); renderList(); buildWheel();
+        document.addEventListener('DOMContentLoaded',()=>{
+            const fi=document.getElementById('spFileInput');
+            if(fi) fi.addEventListener('change',async e=>{
+                for(const f of Array.from(e.target.files||[])){const logo=await compress(f);if(logo)sponsors.push({name:f.name.replace(/\.[^.]+$/,''),logo});}
+                e.target.value='';save();renderList();buildWheel();
             });
-            const modal = document.getElementById('sponsorModal');
-            if(modal) modal.addEventListener('click', e=>{ if(e.target===modal) closeSponsorModal(); });
-            load(); buildWheel();
+            const modal=document.getElementById('sponsorModal');
+            if(modal) modal.addEventListener('click',e=>{if(e.target===modal)closeSponsorModal();});
+            load();buildWheel();
         });
     })();
     </script></body>
