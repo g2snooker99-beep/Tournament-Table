@@ -34,6 +34,38 @@
         #liveTitle { color: white; font-size: 1.15em; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
         #liveStage { color: var(--gold); font-size: 0.9em; margin-top: 4px; letter-spacing: 1px; }
 
+        /* ── BRACKET FULL SCREEN SCALE ── */
+        body { margin: 0; overflow: hidden; width: 100vw; height: 100vh; }
+
+        .live-container {
+            width: 100vw; height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            padding-top: 70px; /* เว้นหัว */
+            padding-bottom: 100px; /* เว้น sponsor bar */
+            box-sizing: border-box;
+        }
+
+        #bracketWrapper {
+            width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Scale bracket ให้เต็มพื้นที่ที่มี */
+        #bracket {
+            transform-origin: center center;
+        }
+
+        .bracket-visual {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center;
+            width: 100%;
+        }
+
+        /* ซ่อนชื่อไฟล์โลโก้บนหน้า live */
+        .sp-wheel-name { display: none !important; }
+
         /* ── SPONSOR BAR ── */
         #sponsorBar {
             position: fixed;
@@ -207,6 +239,42 @@
         }
     </script>
     <script src="script.js?v=10"></script>
+
+    <!-- Auto-scale bracket ให้เต็มจอ -->
+    <script>
+    function scaleBracket() {
+        const bracket = document.getElementById('bracket');
+        const wrapper = document.getElementById('bracketWrapper');
+        if (!bracket || !wrapper) return;
+
+        // reset ก่อนวัด
+        bracket.style.transform = 'scale(1)';
+        bracket.style.transformOrigin = 'center center';
+
+        const bw = bracket.scrollWidth;
+        const bh = bracket.scrollHeight;
+        const ww = wrapper.clientWidth;
+        const wh = wrapper.clientHeight;
+
+        if (!bw || !bh) return;
+
+        const scaleX = ww / bw;
+        const scaleY = wh / bh;
+        const scale = Math.min(scaleX, scaleY, 1.6); // max scale 1.6x
+
+        bracket.style.transform = `scale(${scale})`;
+    }
+
+    // scale ทุกครั้งที่ bracket เปลี่ยน
+    const origInit = window.initBracket;
+    window.initBracket = function(...args) {
+        if (origInit) origInit.apply(this, args);
+        setTimeout(scaleBracket, 120);
+    };
+
+    window.addEventListener('resize', scaleBracket);
+    setTimeout(scaleBracket, 500);
+    </script>
 
     <!-- SPONSOR WHEEL — อ่านจาก localStorage เดียวกับ bracket.html -->
     <script>
