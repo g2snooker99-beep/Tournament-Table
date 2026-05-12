@@ -385,56 +385,52 @@
                     if (name) players.push(name);
                 });
 
-                if (players.length === 0) {
-                    alert("ไม่พบรายชื่อที่อนุมัติ");
-                    return;
-                }
+                if (players.length === 0) { alert("ไม่พบรายชื่อที่อนุมัติ"); return; }
+
+                const zonesNeeded = Math.ceil(players.length / 32) || 1;
+                const totalSlots = zonesNeeded * 32;
+                const byeCount = totalSlots - players.length;
 
                 for (let i = players.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
                     [players[i], players[j]] = [players[j], players[i]];
                 }
 
+                document.getElementById('playerCount').value = totalSlots;
+                window.generateInputFields();
+
                 const inputs = Array.from(document.querySelectorAll('.playerName'));
-                const emptyInputs = inputs.filter((input) => !input.value.trim());
 
-                if (emptyInputs.length === 0) {
-                    alert("ไม่มีช่องว่างให้เติมแล้ว");
-                    return;
+                players.forEach((name, i) => {
+                    if (inputs[i]) {
+                        inputs[i].value = name;
+                        inputs[i].style.borderColor = "var(--status-success)";
+                        setTimeout(() => { inputs[i].style.borderColor = ""; }, 1200);
+                    }
+                });
+
+                for (let i = players.length; i < totalSlots; i++) {
+                    if (inputs[i]) {
+                        inputs[i].value = 'BYE';
+                        inputs[i].style.color = '#446';
+                        inputs[i].style.fontStyle = 'italic';
+                        inputs[i].style.background = 'rgba(0,0,0,0.2)';
+                    }
                 }
 
-                const existingNames = new Set(
-                    inputs.map((input) => input.value.trim()).filter(Boolean)
-                );
-                const candidates = players.filter((name) => !existingNames.has(name));
-
-                if (candidates.length === 0) {
-                    alert("ไม่มีรายชื่อใหม่ให้เติมแล้ว");
-                    return;
-                }
-
-                const fillCount = Math.min(emptyInputs.length, candidates.length);
-
-                for (let i = 0; i < fillCount; i++) {
-                    emptyInputs[i].value = candidates[i];
-                    emptyInputs[i].style.borderColor = "var(--status-success)";
-                    setTimeout(() => {
-                        emptyInputs[i].style.borderColor = "";
-                    }, 1200);
-                }
-
-                const remainingSlots = emptyInputs.length - fillCount;
-                if (remainingSlots > 0) {
-                    alert(`เติมรายชื่อเพิ่ม ${fillCount} คน\nยังเหลือช่องว่างอีก ${remainingSlots} ช่อง`);
+                if (byeCount > 0) {
+                    alert(\`✅ เติมรายชื่อ \${players.length} คนเรียบร้อย\n📋 เพิ่ม BYE อัตโนมัติ \${byeCount} ช่อง (รวม \${totalSlots} slots)\`);
                 } else {
-                    alert(`เติมรายชื่อเพิ่ม ${fillCount} คนเรียบร้อย`);
+                    alert(\`✅ เติมรายชื่อ \${players.length} คนเรียบร้อย\`);
                 }
+
             } catch (e) {
                 alert(e.message);
             } finally {
                 btn.innerText = originalText;
             }
         });
+
 
         window.clearAllInputs = () => { if(confirm("ล้างชื่อทั้งหมด?")) document.querySelectorAll('.playerName').forEach(i => i.value = ""); };
 

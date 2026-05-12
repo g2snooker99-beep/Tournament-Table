@@ -6,6 +6,39 @@ if (!document.getElementById('confetti-script')) {
     document.head.appendChild(script);
 }
 
+// ── BYE helper ──
+function isByeName(name) {
+    if (!name) return true;
+    const n = name.trim().toUpperCase();
+    return n === 'BYE' || n === '' || n === '— BYE —';
+}
+
+// ── Auto-advance เมื่อฝั่งใดเป็น BYE (Round 0) ──
+function processAutoByeMatches(players, zoneIdx) {
+    if (zoneIdx === 99) return;
+    const startIdx = zoneIdx * 32;
+    const zonePlayers = players.slice(startIdx, startIdx + 32);
+
+    [
+        { prefix: `L-Z${zoneIdx}`, offset: 0 },
+        { prefix: `R-Z${zoneIdx}`, offset: 16 }
+    ].forEach(({ prefix, offset }) => {
+        for (let mIdx = 0; mIdx < 8; mIdx++) {
+            const mKey = `match-${prefix}-R0-M${mIdx}`;
+            const nameA = (zonePlayers[offset + mIdx * 2]?.name || '').trim();
+            const nameB = (zonePlayers[offset + mIdx * 2 + 1]?.name || '').trim();
+            const byeA = isByeName(nameA);
+            const byeB = isByeName(nameB);
+
+            if (!window.currentMatches[mKey]) {
+                if (!byeA && byeB)  window.currentMatches[mKey] = nameA;
+                else if (byeA && !byeB) window.currentMatches[mKey] = nameB;
+                // ทั้งคู่ BYE = ปล่อยว่าง
+            }
+        }
+    });
+}
+
 window.generateInputFields = () => {
     const count = parseInt(document.getElementById('playerCount').value) || 8;
     const container = document.getElementById('nameFields');
@@ -43,23 +76,12 @@ window.generateInputFields = () => {
 window.fillTestData = () => {
     const inputs = Array.from(document.querySelectorAll('.playerName'));
     if (inputs.length === 0) return;
-
     const emptyInputs = inputs.filter((input) => !input.value.trim());
-    if (emptyInputs.length === 0) {
-        alert("ไม่มีช่องว่างให้เติมชื่อทดสอบแล้ว");
-        return;
-    }
-
-    const existingNames = new Set(
-        inputs.map((input) => input.value.trim().toLowerCase()).filter(Boolean)
-    );
-
+    if (emptyInputs.length === 0) { alert("ไม่มีช่องว่างให้เติมชื่อทดสอบแล้ว"); return; }
+    const existingNames = new Set(inputs.map((input) => input.value.trim().toLowerCase()).filter(Boolean));
     let nextNumber = 1;
     emptyInputs.forEach((input) => {
-        while (existingNames.has(`p-${nextNumber}`)) {
-            nextNumber++;
-        }
-
+        while (existingNames.has(`p-${nextNumber}`)) { nextNumber++; }
         const testName = `P-${nextNumber}`;
         input.value = testName;
         existingNames.add(testName.toLowerCase());
@@ -77,68 +99,39 @@ window.bulkPaste = () => {
     names.forEach((name, i) => { if(inputs[i]) inputs[i].value = name; });
 };
 
-// 🎲 อัปเดตฟังก์ชันสุ่มรายชื่อแบบมีแอนิเมชันลุ้นระทึก
 window.shuffleInputs = () => {
     const inputs = Array.from(document.querySelectorAll('.playerName'));
     const originalVals = inputs.map(i => i.value);
-    
-    // สร้าง Array ที่สุ่มผลลัพธ์สุดท้ายรอไว้เลย
     let finalVals = [...originalVals];
     for (let i = finalVals.length - 1; i > 0; i--) { 
         const j = Math.floor(Math.random() * (i + 1)); 
         [finalVals[i], finalVals[j]] = [finalVals[j], finalVals[i]]; 
     }
-
-    // ล็อกปุ่มอื่นๆ ป้องกันคนกดซ้ำตอนกำลังสุ่ม
     const allButtons = document.querySelectorAll('button');
     allButtons.forEach(btn => btn.style.pointerEvents = 'none');
-
-    // ใส่คลาสแอนิเมชันให้ทุกช่อง
     inputs.forEach(input => input.classList.add('is-shuffling'));
-
     let shufflesCount = 0;
-    const maxShuffles = 20; // จำนวนรอบที่สลับหลอก
-    const speed = 100; // ความเร็วกะพริบ (ms)
-
-    // เริ่มการสลับหลอก (รัวๆ)
+    const maxShuffles = 20;
+    const speed = 100;
     const shuffleInterval = setInterval(() => {
         let tempVals = [...originalVals];
         for (let i = tempVals.length - 1; i > 0; i--) { 
             const j = Math.floor(Math.random() * (i + 1)); 
             [tempVals[i], tempVals[j]] = [tempVals[j], tempVals[i]]; 
         }
-        
-        inputs.forEach((input, i) => { 
-            input.value = tempVals[i];
-        });
-
+        inputs.forEach((input, i) => { input.value = tempVals[i]; });
         shufflesCount++;
-
-        // เมื่อสลับครบกำหนด ให้หยุดและแสดงผลจริง
         if (shufflesCount >= maxShuffles) {
             clearInterval(shuffleInterval);
-            
             inputs.forEach((input, i) => { 
-                input.value = finalVals[i]; // ใส่ผลจริง
+                input.value = finalVals[i];
                 input.classList.remove('is-shuffling');
-                
-                // เอฟเฟกต์สีเขียวตอนหยุด
                 input.style.boxShadow = '0 0 15px var(--status-success)';
                 input.style.borderColor = 'var(--status-success)';
                 input.style.background = 'rgba(40, 167, 69, 0.1)';
-                
-                // คืนค่าสีเดิมหลังผ่านไป 1.5 วิ
-                setTimeout(() => {
-                    input.style.boxShadow = '';
-                    input.style.borderColor = '';
-                    input.style.background = '';
-                }, 1500);
+                setTimeout(() => { input.style.boxShadow = ''; input.style.borderColor = ''; input.style.background = ''; }, 1500);
             });
-
-            // ปลดล็อกปุ่ม
             allButtons.forEach(btn => btn.style.pointerEvents = 'auto');
-
-            // จุดพลุฉลองเบาๆ
             if (typeof confetti !== 'undefined') {
                 confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 }, zIndex: 9999 });
             }
@@ -152,6 +145,11 @@ window.initBracket = (players, matches = {}, zoneIdx = 0) => {
     window.currentMatches = matches; window.currentPlayers = players;
     const container = document.getElementById('bracket'); if (!container) return; container.innerHTML = '';
     const visual = document.createElement('div'); visual.className = 'bracket-visual';
+
+    // ── Auto-advance BYE ก่อน render ──
+    if (zoneIdx !== 99) {
+        processAutoByeMatches(players, zoneIdx);
+    }
 
     if (zoneIdx === 99) {
         visual.style.transform = "scale(1.1)"; 
@@ -234,15 +232,36 @@ function createSlot(r, mKey, pIdx, players, offset) {
     let prevKeyToClear = null; 
     
     if (r === 0) {
-        const mIdx = parseInt(mKey.split('-M')[1]); name = players[offset + (mIdx * 2) + pIdx]?.name || "BYE";
+        const mIdx = parseInt(mKey.split('-M')[1]);
+        name = players[offset + (mIdx * 2) + pIdx]?.name || "BYE";
     } else {
         const parts = mKey.split('-R'); 
         const prevMatchIdx = parseInt(parts[1].split('-M')[1]) * 2 + pIdx;
         prevKeyToClear = `${parts[0]}-R${r-1}-M${prevMatchIdx}`;
         name = window.currentMatches[`match-${prevKeyToClear}`] || "รอผล";
     }
-    const isWaiting = name === "รอผล" || name === "BYE";
+
+    // ── BYE slot ──
+    const bye = isByeName(name) && name !== 'รอผล';
+    const isWaiting = name === "รอผล" || bye;
+
     if (isWaiting) slot.classList.add('waiting');
+    if (bye) {
+        slot.classList.add('is-bye');
+        slot.style.cssText = `
+            opacity: 0.35;
+            border-left-color: rgba(255,255,255,0.05) !important;
+            border-right-color: rgba(255,255,255,0.05) !important;
+            pointer-events: none;
+            font-style: italic;
+            letter-spacing: 2px;
+            font-size: 0.82em;
+            color: #445 !important;
+            background: rgba(0,0,0,0.2) !important;
+        `;
+        slot.innerHTML = `<span class="slot-name" style="color:#445;">— BYE —</span>`;
+        return slot;
+    }
 
     slot.innerHTML = `<span class="slot-name">${name}</span>`;
 
@@ -288,44 +307,24 @@ function createSlot(r, mKey, pIdx, players, offset) {
 }
 
 window.selectZoneChamp = (zIdx, name) => {
-    if (!name || name.includes('รอ') || name === 'BYE') return; window.currentMatches[`winner-zone-${zIdx}`] = name;
+    if (!name || name.includes('รอ') || isByeName(name)) return;
+    window.currentMatches[`winner-zone-${zIdx}`] = name;
     window.initBracket(window.currentPlayers, window.currentMatches, window.currentZoneIdx);
 };
 
 window.selectGrandChamp = (name) => {
-    if (!name || name.includes('รอ') || name === 'BYE') return;
+    if (!name || name.includes('รอ') || isByeName(name)) return;
     window.currentMatches['grand-champion'] = name;
     window.initBracket(window.currentPlayers, window.currentMatches, 99);
-    
     setTimeout(() => {
         document.body.classList.add('shake-screen');
         setTimeout(() => document.body.classList.remove('shake-screen'), 600);
-
         if (typeof confetti !== 'undefined') {
-            var duration = 10 * 1000;
-            var end = Date.now() + duration;
-
+            var duration = 10 * 1000; var end = Date.now() + duration;
             (function frame() {
-                confetti({
-                    particleCount: 7,
-                    angle: 60,
-                    spread: 55,
-                    origin: { x: 0, y: 0.8 },
-                    colors: ['#ffd700', '#ffffff', '#00d4ff'],
-                    zIndex: 9999
-                });
-                confetti({
-                    particleCount: 7,
-                    angle: 120,
-                    spread: 55,
-                    origin: { x: 1, y: 0.8 },
-                    colors: ['#ffd700', '#ffffff', '#00d4ff'],
-                    zIndex: 9999
-                });
-
-                if (Date.now() < end) {
-                    requestAnimationFrame(frame);
-                }
+                confetti({ particleCount: 7, angle: 60, spread: 55, origin: { x: 0, y: 0.8 }, colors: ['#ffd700', '#ffffff', '#00d4ff'], zIndex: 9999 });
+                confetti({ particleCount: 7, angle: 120, spread: 55, origin: { x: 1, y: 0.8 }, colors: ['#ffd700', '#ffffff', '#00d4ff'], zIndex: 9999 });
+                if (Date.now() < end) requestAnimationFrame(frame);
             }());
         }
     }, 100);
@@ -350,110 +349,55 @@ function createFinalWinnerSlot(id1, id2) {
 
 window.resetTournamentData = async () => {
     const cid = document.getElementById('campaignSelectSetup')?.value;
-    if (!cid) {
-        alert("กรุณาเลือกรายการแข่งขันก่อน");
-        return;
-    }
-
+    if (!cid) { alert("กรุณาเลือกรายการแข่งขันก่อน"); return; }
     if (!confirm("ต้องการล้างผลการแข่งขันทั้งหมดและเริ่มใหม่ใช่หรือไม่?")) return;
-
     const btn = document.getElementById('resetTourneyBtn');
     const originalText = btn?.innerText;
-
-    if (btn) {
-        btn.disabled = true;
-        btn.innerText = "⏳ กำลังล้างผลการแข่งขัน...";
-    }
-
+    if (btn) { btn.disabled = true; btn.innerText = "⏳ กำลังล้างผลการแข่งขัน..."; }
     try {
         const { db, collection, query, where, getDocs, updateDoc, doc } = window.dbFunctions;
         const q = query(collection(db, "tournaments"), where("campaignId", "==", cid));
         const snap = await getDocs(q);
-
-        if (snap.empty) {
-            alert("ยังไม่มีข้อมูลสายการแข่งขันให้ล้าง");
-            return;
-        }
-
+        if (snap.empty) { alert("ยังไม่มีข้อมูลสายการแข่งขันให้ล้าง"); return; }
         const tourneyDoc = snap.docs[0];
-        await updateDoc(doc(db, "tournaments", tourneyDoc.id), {
-            matches: {},
-            updatedAt: new Date()
-        });
-
+        await updateDoc(doc(db, "tournaments", tourneyDoc.id), { matches: {}, updatedAt: new Date() });
         window.currentMatches = {};
         alert("✅ ล้างผลการแข่งขันเรียบร้อย");
-
-        if (typeof window.checkExistingSetup === "function") {
-            await window.checkExistingSetup();
-        }
-    } catch (e) {
-        alert("❌ " + e.message);
-    } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerText = originalText || "🗑️ ล้างผลการแข่งทั้งหมด (Reset เริ่มใหม่)";
-        }
-    }
+        if (typeof window.checkExistingSetup === "function") await window.checkExistingSetup();
+    } catch (e) { alert("❌ " + e.message); }
+    finally { if (btn) { btn.disabled = false; btn.innerText = originalText || "🗑️ ล้างผลการแข่งทั้งหมด (Reset เริ่มใหม่)"; } }
 };
 
 window.saveAndGoToBracket = async () => {
     const btn = document.getElementById('saveBtn');
     if (btn) btn.innerText = "⏳ บันทึก...";
-
     const players = Array.from(document.querySelectorAll('.playerName')).map(i => ({
-        name: i.value.trim()
+        name: i.value.trim() || 'BYE'
     }));
-
     const campaignSelect = document.getElementById('campaignSelectSetup');
     const cid = campaignSelect?.value || "manual";
     const campaignName = campaignSelect?.selectedOptions?.[0]?.text?.trim() || "Manual Tournament";
-
     try {
         const { db, collection, addDoc, query, where, getDocs, updateDoc, doc } = window.dbFunctions;
         const q = query(collection(db, "tournaments"), where("campaignId", "==", cid));
         const snap = await getDocs(q);
-
         let dId;
         if (!snap.empty) {
             dId = snap.docs[0].id;
-            await updateDoc(doc(db, "tournaments", dId), {
-                players,
-                campaignName,
-                updatedAt: new Date()
-            });
+            await updateDoc(doc(db, "tournaments", dId), { players, campaignName, updatedAt: new Date() });
         } else {
             const dr = await addDoc(collection(db, "tournaments"), {
-                players,
-                campaignId: cid,
-                campaignName,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                matches: {}
+                players, campaignId: cid, campaignName,
+                createdAt: new Date(), updatedAt: new Date(), matches: {}
             });
             dId = dr.id;
         }
-
         const base = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
-        
         const adminLink = `${base}bracket.html?id=${dId}`;
         const liveLink = `${base}live.html?id=${dId}`;
-
-        if (document.getElementById('adminUrl')) {
-            document.getElementById('adminUrl').innerText = adminLink;
-            document.getElementById('adminUrl').href = adminLink;
-        }
-        if (document.getElementById('liveUrl')) {
-            document.getElementById('liveUrl').innerText = liveLink;
-            document.getElementById('liveUrl').href = liveLink;
-        }
-        if (document.getElementById('linkDisplayArea')) {
-            document.getElementById('linkDisplayArea').style.display = 'block';
-        }
-
-    } catch (e) {
-        alert("❌ " + e.message);
-    }
-
+        if (document.getElementById('adminUrl')) { document.getElementById('adminUrl').innerText = adminLink; document.getElementById('adminUrl').href = adminLink; }
+        if (document.getElementById('liveUrl')) { document.getElementById('liveUrl').innerText = liveLink; document.getElementById('liveUrl').href = liveLink; }
+        if (document.getElementById('linkDisplayArea')) document.getElementById('linkDisplayArea').style.display = 'block';
+    } catch (e) { alert("❌ " + e.message); }
     if (btn) btn.innerText = "💾 บันทึกสายการแข่งขัน";
 };
